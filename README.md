@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/logo.png" alt="Kerniq Server logo" width="600">
+</p>
+
 # Kerniq Server
 
 **A lightweight, asynchronous web framework for Rust: Flask-like simplicity on

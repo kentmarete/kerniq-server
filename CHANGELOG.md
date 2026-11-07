@@ -23,6 +23,9 @@ adheres to [Semantic Versioning](https://semver.org/).
 - Guide for connecting databases and message brokers
   (`docs/integrations.md`): PostgreSQL/MySQL/SQLite with `sqlx`, Redis,
   MongoDB, Kafka and RabbitMQ, with a summary in the README.
+- Claude Code skill for building services with Kerniq
+  (`skills/kerniq-server/SKILL.md`), with install instructions in the
+  README.
 
 ## [0.1.0] - 2026-11-07
 

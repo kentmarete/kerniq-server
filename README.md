@@ -277,6 +277,23 @@ kerniq test
 Every template compiles, passes `kerniq check`, and passes its own tests
 immediately after generation.
 
+## Using Kerniq with Claude Code
+
+[`skills/kerniq-server/SKILL.md`](skills/kerniq-server/SKILL.md) is a
+[Claude Code skill](https://docs.claude.com/en/docs/claude-code/skills) that
+teaches Claude how to build services with Kerniq: project templates and
+layout, routing, errors, state, middleware order, authentication and
+authorization, configuration, databases and brokers, and testing. Install it
+for all your projects, or for a single one:
+
+```sh
+cp -r skills/kerniq-server ~/.claude/skills/                  # every project
+cp -r skills/kerniq-server <your-project>/.claude/skills/     # one project
+```
+
+Claude loads it automatically when you work on a Kerniq service, for example
+"create an orders service with Kerniq" or "add an admin-only endpoint".
+
 ## Architecture
 
 ```text

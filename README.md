@@ -192,6 +192,56 @@ Use `Error` for failures so clients always get the JSON envelope, and status
 tuples for everything else. See [Handlers, responses and
 errors](docs/handlers.md) for the full guide.
 
+## Databases and message brokers
+
+Kerniq does not wrap any database or broker client: use the crate you
+already know (`sqlx`, `redis`, `mongodb`, `rdkafka`, `lapin`, …). Connect
+at startup, share the client through state, run consumers as background
+tasks that stop on shutdown, and close connections after `run` returns:
+
+```rust,ignore
+use kerniq_server::prelude::*;
+use sqlx::postgres::{PgPool, PgPoolOptions};
+
+#[derive(Clone)]
+struct AppState { db: PgPool }
+
+async fn count_users(State(state): State<AppState>) -> Result<String> {
+    let (n,): (i64,) = sqlx::query_as("SELECT count(*) FROM users")
+        .fetch_one(&state.db)
+        .await
+        .or_internal()?; // logged, never leaked; the client sees a generic 500
+    Ok(n.to_string())
+}
+
+#[tokio::main]
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
+    let db = PgPoolOptions::new()
+        .max_connections(20)
+        .connect(&std::env::var("DATABASE_URL")?)
+        .await?; // an unreachable database fails startup, not the first request
+
+    App::new()
+        .state(AppState { db: db.clone() })
+        .get("/users/count", count_users)
+        .background_task("orders-consumer", |shutdown: Shutdown| async move {
+            // e.g. a Kafka or RabbitMQ consumer loop:
+            // tokio::select! { msg = consumer.recv() => ..., () = shutdown.wait() => break }
+            shutdown.wait().await;
+        })
+        .run("0.0.0.0:3000")
+        .await?;
+
+    db.close().await; // requests have drained and tasks have stopped
+    Ok(())
+}
+```
+
+[Databases and message brokers](docs/integrations.md) has complete examples
+for PostgreSQL/MySQL/SQLite (`sqlx`), Redis (commands and pub/sub), MongoDB,
+Kafka (producer and consumer) and RabbitMQ (publisher and consumer), plus
+error mapping, health checks, pool sizing and testing.
+
 ## Features
 
 | Area | What you get |
@@ -267,6 +317,8 @@ are in [docs/performance.md](docs/performance.md). Run
 * [Runtime, lifecycle and graceful shutdown](docs/runtime.md)
 * [WebSockets](docs/websockets.md)
 * [Configuration](docs/configuration.md)
+* [Databases and message brokers](docs/integrations.md) (PostgreSQL, MySQL,
+  SQLite, Redis, MongoDB, Kafka, RabbitMQ)
 * [OpenAPI](docs/openapi.md)
 * [Performance and benchmarking](docs/performance.md)
 * [Architecture](docs/architecture.md)
@@ -280,7 +332,9 @@ Runnable examples live in [`examples/`](examples): `hello-world`,
 cargo run -p example-rest-api
 ```
 
-Every Rust snippet in this README and in `docs/` is compiled as a doctest.
+Every Rust snippet in this README and in `docs/` is compiled as a doctest,
+except the third-party integration examples (marked `ignore`), which need
+crates Kerniq does not depend on.
 
 ## Contributing
 

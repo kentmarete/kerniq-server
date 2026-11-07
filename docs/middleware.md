@@ -165,6 +165,9 @@ let app = App::new().middleware(Auth::new(ApiKeys));
 is accidentally not covered by `Auth` fails closed. Use
 `Option<Identity<T>>` for optional authentication.
 
+To restrict routes by role or permission, per handler (`#[authorize]`) or
+per router (`Require`), see [Authorization](authorization.md).
+
 ### Metrics
 
 ```rust

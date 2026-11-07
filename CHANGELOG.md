@@ -8,6 +8,18 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- Opt-in authorization: `Authorities` (roles and permissions of an
+  identity), `Policy<T>` and the `Authorized<T, P>` extractor, which rejects
+  with `401` without an identity and `403` when the policy fails.
+- `macros` feature with the `#[authorize(..)]` handler attribute, in the
+  spirit of Spring's `@PreAuthorize`: `has_role`, `has_any_role`,
+  `has_all_roles`, `has_permission`, `has_any_permission`,
+  `has_all_permissions`, `authenticated()`, `check(fn)`, combined with
+  `&&`, `||` and `!`. New crate `kerniq-macros`.
+- `Require<T>` middleware for router-level role and permission rules
+  (`Require::<User>::role("ADMIN")`, `any_role`, `permission`, `check`,
+  `policy::<P>()`, `.and`, `.or`, `.message`), the counterpart of Spring
+  Security's `requestMatchers(..).hasRole(..)`.
 - Guide for connecting databases and message brokers
   (`docs/integrations.md`): PostgreSQL/MySQL/SQLite with `sqlx`, Redis,
   MongoDB, Kafka and RabbitMQ, with a summary in the README.

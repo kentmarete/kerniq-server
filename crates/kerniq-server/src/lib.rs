@@ -49,6 +49,7 @@
 //! | `openapi` | | `openapi` module (Utoipa + Swagger UI) |
 //! | `validation` | | `ValidatedJson`, `ValidatedQuery` |
 //! | `config-file` | | `ServerConfig::from_file` (TOML) |
+//! | `macros` | | [`authorize`] attribute for role/permission checks |
 //! | `full` | | all of the above |
 
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
@@ -58,6 +59,9 @@ pub mod prelude;
 
 pub use builder::App;
 pub use kerniq_core::{Error, Result};
+
+#[cfg(feature = "macros")]
+pub use kerniq_macros::authorize;
 
 /// Re-export of Axum, for interoperability with Axum handlers, routers and
 /// extractors at a guaranteed-compatible version.
@@ -142,6 +146,7 @@ mod documentation {
     doc_page!(Extractors, "docs/extractors.md", "json", "validation");
     doc_page!(StateManagement, "docs/state-management.md", "json");
     doc_page!(Middleware, "docs/middleware.md", "tracing", "cors");
+    doc_page!(Authorization, "docs/authorization.md", "macros", "json");
     doc_page!(AxumInterop, "docs/axum-interop.md", "json");
     doc_page!(Runtime, "docs/runtime.md");
     doc_page!(Websockets, "docs/websockets.md", "websocket");

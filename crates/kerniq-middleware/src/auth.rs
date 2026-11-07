@@ -33,9 +33,28 @@
 //!
 //! Apply `Auth` to a router holding only protected routes (router-scoped
 //! middleware), or to the whole app.
+//!
+//! # Authorization
+//!
+//! Authentication answers *who* is calling; authorization decides *what*
+//! they may do. Both are optional and opt-in per route:
+//!
+//! * [`Authorities`] — implement for your identity type to expose roles and
+//!   permissions,
+//! * [`Policy`] — a type-level rule over an identity,
+//! * [`Authorized<T, P>`] — extractor that requires an identity satisfying
+//!   policy `P`, rejecting with `403 FORBIDDEN` otherwise,
+//! * [`Require<T>`] — middleware applying a rule to every route of a router
+//!   (`Require::<User>::role("ADMIN")`).
+//!
+//! The `#[authorize(..)]` attribute in `kerniq-server` (feature `macros`)
+//! generates the policy from an expression such as
+//! `has_any_role("USER", "ADMIN")`.
 
 use std::fmt;
 use std::future::Future;
+use std::marker::PhantomData;
+use std::ops::Deref;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
@@ -47,6 +66,10 @@ use http::request::Parts;
 use kerniq_core::Error;
 use kerniq_routing::Middleware;
 use tower::{Layer, Service};
+
+mod require;
+
+pub use require::{Require, RequireFuture, RequireLayer, RequireService};
 
 /// Authenticates a request from its head (method, URI, headers,
 /// extensions).
@@ -268,5 +291,137 @@ where
             .extensions
             .get::<AuthIdentity<T>>()
             .map(|AuthIdentity(identity)| Identity(identity.clone())))
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Authorization
+// ---------------------------------------------------------------------------
+
+/// Roles and permissions carried by an authenticated identity.
+///
+/// Implement this for your identity type to use role and permission checks,
+/// either through the `#[authorize(..)]` attribute (feature `macros` of
+/// `kerniq-server`) or a hand-written [`Policy`].
+///
+/// ```
+/// use kerniq_middleware::auth::Authorities;
+///
+/// #[derive(Clone)]
+/// struct User { roles: Vec<String>, permissions: Vec<String> }
+///
+/// impl Authorities for User {
+///     fn has_role(&self, role: &str) -> bool {
+///         self.roles.iter().any(|r| r == role)
+///     }
+///     fn has_permission(&self, permission: &str) -> bool {
+///         self.permissions.iter().any(|p| p == permission)
+///     }
+/// }
+/// ```
+pub trait Authorities {
+    /// Whether the identity has `role`.
+    fn has_role(&self, role: &str) -> bool;
+
+    /// Whether the identity has `permission`. Defaults to `false`, for
+    /// identities that only carry roles.
+    fn has_permission(&self, permission: &str) -> bool {
+        let _ = permission;
+        false
+    }
+}
+
+/// An authorization rule for identities of type `T`, checked by the
+/// [`Authorized<T, P>`] extractor.
+///
+/// Policies are types rather than values, so the rule is part of the
+/// handler's signature and costs nothing to construct. Return `Err`
+/// (usually [`Error::forbidden`]) to reject the request.
+///
+/// ```
+/// use kerniq_core::Error;
+/// use kerniq_middleware::auth::{Authorized, Policy};
+///
+/// #[derive(Clone)]
+/// struct User { admin: bool }
+///
+/// struct AdminOnly;
+///
+/// impl Policy<User> for AdminOnly {
+///     fn check(user: &User) -> Result<(), Error> {
+///         if user.admin { Ok(()) } else { Err(Error::forbidden("Admins only")) }
+///     }
+/// }
+///
+/// async fn purge(admin: Authorized<User, AdminOnly>) -> &'static str {
+///     let _user: &User = &admin;
+///     "purged"
+/// }
+/// ```
+pub trait Policy<T>: 'static {
+    /// Checks `identity` against the policy.
+    fn check(identity: &T) -> Result<(), Error>;
+}
+
+/// Extracts the identity produced by [`Auth`] and checks it against the
+/// policy `P`.
+///
+/// Rejects with `401 UNAUTHORIZED` when no identity of type `T` is present
+/// (same as [`Identity<T>`]) and with the policy's error, usually
+/// `403 FORBIDDEN`, when the check fails. Dereferences to `T`.
+pub struct Authorized<T, P> {
+    identity: T,
+    _policy: PhantomData<fn() -> P>,
+}
+
+impl<T, P> Authorized<T, P> {
+    /// Returns the authorized identity.
+    pub fn into_inner(self) -> T {
+        self.identity
+    }
+}
+
+impl<T, P> Deref for Authorized<T, P> {
+    type Target = T;
+
+    fn deref(&self) -> &T {
+        &self.identity
+    }
+}
+
+impl<T: Clone, P> Clone for Authorized<T, P> {
+    fn clone(&self) -> Self {
+        Self {
+            identity: self.identity.clone(),
+            _policy: PhantomData,
+        }
+    }
+}
+
+impl<T: fmt::Debug, P> fmt::Debug for Authorized<T, P> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Authorized")
+            .field("identity", &self.identity)
+            .field("policy", &std::any::type_name::<P>())
+            .finish()
+    }
+}
+
+impl<T, P, S> FromRequestParts<S> for Authorized<T, P>
+where
+    T: Clone + Send + Sync + 'static,
+    P: Policy<T>,
+    S: Send + Sync,
+{
+    type Rejection = Error;
+
+    async fn from_request_parts(parts: &mut Parts, state: &S) -> Result<Self, Self::Rejection> {
+        let Identity(identity) =
+            <Identity<T> as FromRequestParts<S>>::from_request_parts(parts, state).await?;
+        P::check(&identity)?;
+        Ok(Self {
+            identity,
+            _policy: PhantomData,
+        })
     }
 }

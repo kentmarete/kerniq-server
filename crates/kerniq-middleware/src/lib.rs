@@ -18,6 +18,7 @@
 //! | [`SecurityHeaders`] | Kerniq (single header-setting layer) | — |
 //! | [`RateLimit`] | Kerniq (sharded token buckets) | — |
 //! | [`Auth`](auth::Auth) | Kerniq (extension point, no provider) | — |
+//! | [`Require`](auth::Require) | Kerniq (role/permission rules per router) | — |
 //! | [`Metrics`] | Kerniq (Prometheus text format) | — |
 //!
 //! # Fusing middleware on hot paths

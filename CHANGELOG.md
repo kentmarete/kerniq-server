@@ -65,5 +65,5 @@ First release.
 - Twelve runnable examples, guides in `docs/`, and benchmarks against native
   Axum (criterion, allocation counts, real-HTTP load test).
 
-[Unreleased]: https://github.com/kerniq/kerniq-server/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/kerniq/kerniq-server/releases/tag/v0.1.0
+[Unreleased]: https://github.com/kerniqq/kerniq-server/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/kerniqq/kerniq-server/releases/tag/v0.1.0

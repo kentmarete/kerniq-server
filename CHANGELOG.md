@@ -20,6 +20,9 @@ adheres to [Semantic Versioning](https://semver.org/).
   (`Require::<User>::role("ADMIN")`, `any_role`, `permission`, `check`,
   `policy::<P>()`, `.and`, `.or`, `.message`), the counterpart of Spring
   Security's `requestMatchers(..).hasRole(..)`.
+- Guide for connecting databases and message brokers
+  (`docs/integrations.md`): PostgreSQL/MySQL/SQLite with `sqlx`, Redis,
+  MongoDB, Kafka and RabbitMQ, with a summary in the README.
 
 ## [0.1.0] - 2026-11-07
 

@@ -151,6 +151,7 @@ mod documentation {
     doc_page!(Runtime, "docs/runtime.md");
     doc_page!(Websockets, "docs/websockets.md", "websocket");
     doc_page!(Configuration, "docs/configuration.md", "config-file");
+    doc_page!(Integrations, "docs/integrations.md");
     doc_page!(OpenApi, "docs/openapi.md", "openapi", "json");
     doc_page!(Performance, "docs/performance.md");
     doc_page!(Architecture, "docs/architecture.md");

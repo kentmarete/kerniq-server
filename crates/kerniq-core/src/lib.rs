@@ -11,6 +11,7 @@
 //!
 //! Application code normally uses these through `kerniq_server::prelude`.
 
+#![warn(missing_docs)]
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 
 pub mod config;

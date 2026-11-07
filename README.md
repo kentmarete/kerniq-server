@@ -190,7 +190,8 @@ async fn health() -> StatusCode {
 
 Use `Error` for failures so clients always get the JSON envelope, and status
 tuples for everything else. See [Handlers, responses and
-errors](docs/handlers.md) for the full guide.
+errors](docs/handlers.md) for the full guide, and
+[`examples/error-handling`](examples/error-handling) for a runnable version.
 
 ## Databases and message brokers
 
@@ -340,11 +341,13 @@ are in [docs/performance.md](docs/performance.md). Run
 * [OpenAPI](docs/openapi.md)
 * [Performance and benchmarking](docs/performance.md)
 * [Architecture](docs/architecture.md)
+* [Migration guide](MIGRATION.md) — upgrading across breaking releases
+* [Changelog](CHANGELOG.md)
 
 Runnable examples live in [`examples/`](examples): `hello-world`,
 `rest-api`, `shared-state`, `route-groups`, `middleware`,
-`custom-middleware`, `axum-integration`, `websocket`, `graceful-shutdown`,
-`openapi`, `validation` and `run-blocking`:
+`custom-middleware`, `error-handling`, `axum-integration`, `websocket`,
+`graceful-shutdown`, `openapi`, `validation` and `run-blocking`:
 
 ```sh
 cargo run -p example-rest-api

@@ -317,11 +317,15 @@ where
 
 pin_project! {
     /// Response future for [`RateLimitService`].
+    // `pin_project!` cannot carry doc comments on variant fields, so the
+    // fields are described on their variants instead.
+    #[allow(missing_docs)]
     #[project = RateLimitProj]
     pub enum RateLimitFuture<F> {
-        /// Forwarded to the inner service.
+        /// Forwarded; `future` is the inner service's response future.
         Inner { #[pin] future: F },
-        /// Rejected.
+        /// Rejected because the rate limit was exceeded; `response`
+        /// is the `429` response, taken on first poll.
         Limited { response: Option<Response> },
     }
 }

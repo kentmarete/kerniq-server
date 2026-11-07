@@ -288,11 +288,15 @@ where
 
 pin_project! {
     /// Response future of [`RequireService`].
+    // `pin_project!` cannot carry doc comments on variant fields, so the
+    // fields are described on their variants instead.
+    #[allow(missing_docs)]
     #[project = RequireFutureProj]
     pub enum RequireFuture<F> {
-        /// The rule passed; the inner service is running.
+        /// The rule passed; `future` is the inner service's response future.
         Inner { #[pin] future: F },
-        /// The rule failed; the rejection is returned immediately.
+        /// The rule failed; the rejection is returned immediately;
+        /// `response` is the rejection response, taken on first poll.
         Rejected { response: Option<Response> },
     }
 }

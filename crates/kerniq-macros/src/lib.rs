@@ -3,6 +3,8 @@
 //! Use them through `kerniq-server` with the `macros` feature; this crate's
 //! expansions refer to `::kerniq_server` paths.
 
+#![warn(missing_docs)]
+
 use proc_macro::TokenStream;
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{format_ident, quote};

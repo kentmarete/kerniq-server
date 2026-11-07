@@ -12,6 +12,7 @@
 //! * re-exports of the Axum types handlers commonly need ([`State`],
 //!   [`Body`], [`Bytes`], [`Extension`], [`HeaderMap`], ...).
 
+#![warn(missing_docs)]
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 
 pub mod extractors;

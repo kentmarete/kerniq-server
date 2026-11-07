@@ -52,6 +52,7 @@
 //! | `macros` | | [`authorize`] attribute for role/permission checks |
 //! | `full` | | all of the above |
 
+#![warn(missing_docs)]
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 
 mod builder;

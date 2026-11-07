@@ -10,6 +10,7 @@
 //! * [`path`] — normalization of `:id` / `{id}` path syntax,
 //! * [`methods`] — Axum's method-router constructors for advanced routes.
 
+#![warn(missing_docs)]
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 
 pub mod middleware;

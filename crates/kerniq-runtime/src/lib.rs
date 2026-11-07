@@ -9,6 +9,7 @@
 //! Kerniq does not implement an executor or an HTTP protocol: Tokio and
 //! Hyper do that work.
 
+#![warn(missing_docs)]
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 
 pub mod runtime;

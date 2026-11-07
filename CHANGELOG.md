@@ -26,6 +26,12 @@ adheres to [Semantic Versioning](https://semver.org/).
 - Claude Code skill for building services with Kerniq
   (`skills/kerniq-server/SKILL.md`), with install instructions in the
   README.
+- `examples/error-handling`: domain errors mapped with `From`, `?`, error
+  codes and details, internal errors that never leak, headers such as
+  `Retry-After`, and a custom fallback.
+- `MIGRATION.md`, a guide to upgrading across breaking releases.
+- `#![warn(missing_docs)]` in every library crate, and docs for the
+  variants of `RequireFuture` and `RateLimitFuture`.
 
 ## [0.1.0] - 2026-11-07
 

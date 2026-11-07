@@ -1,0 +1,61 @@
+use kerniq_server::prelude::*;
+
+use crate::models::{CreateUser, Pagination, UpdateUser, User};
+use crate::store::Store;
+
+fn user_not_found() -> Error {
+    Error::not_found("The requested user does not exist").with_code("USER_NOT_FOUND")
+}
+
+pub async fn list_users(
+    State(store): State<Store>,
+    Query(page): Query<Pagination>,
+) -> Json<Vec<User>> {
+    let limit = page.limit.unwrap_or(20).min(100);
+    let offset = page.page.unwrap_or(1).saturating_sub(1) * limit;
+    Json(store.list(offset, limit).await)
+}
+
+pub async fn get_user(State(store): State<Store>, Path(id): Path<u64>) -> Result<Json<User>> {
+    store.get(id).await.map(Json).ok_or_else(user_not_found)
+}
+
+pub async fn create_user(
+    State(store): State<Store>,
+    Json(input): Json<CreateUser>,
+) -> Result<Created<User>> {
+    if !input.email.contains('@') {
+        return Err(
+            Error::unprocessable("`email` must be a valid email address")
+                .with_code("INVALID_EMAIL"),
+        );
+    }
+    Ok(Created(store.insert(input.name, input.email).await))
+}
+
+pub async fn update_user(
+    State(store): State<Store>,
+    Path(id): Path<u64>,
+    Json(input): Json<UpdateUser>,
+) -> Result<Json<User>> {
+    store
+        .update(id, |user| {
+            if let Some(name) = input.name {
+                user.name = name;
+            }
+            if let Some(email) = input.email {
+                user.email = email;
+            }
+        })
+        .await
+        .map(Json)
+        .ok_or_else(user_not_found)
+}
+
+pub async fn delete_user(State(store): State<Store>, Path(id): Path<u64>) -> Result<NoContent> {
+    if store.remove(id).await {
+        Ok(NoContent)
+    } else {
+        Err(user_not_found())
+    }
+}

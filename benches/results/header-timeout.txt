@@ -1,0 +1,9 @@
+kerniq header_timeout=30  rps=226121 p50=0.274ms p99=0.558ms
+kerniq header_timeout=0   rps=234804 p50=0.263ms p99=0.530ms
+axum   header_timeout=30  rps=221633 p50=0.278ms p99=0.574ms
+kerniq header_timeout=30  rps=220696 p50=0.281ms p99=0.566ms
+kerniq header_timeout=0   rps=226134 p50=0.273ms p99=0.559ms
+axum   header_timeout=30  rps=228475 p50=0.271ms p99=0.546ms
+kerniq header_timeout=30  rps=215407 p50=0.287ms p99=0.593ms
+kerniq header_timeout=0   rps=225120 p50=0.273ms p99=0.567ms
+axum   header_timeout=30  rps=227374 p50=0.272ms p99=0.547ms

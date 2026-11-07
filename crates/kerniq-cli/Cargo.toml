@@ -1,0 +1,25 @@
+[package]
+name = "kerniq-cli"
+description = "Project scaffolding and development commands for Kerniq Server."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+keywords.workspace = true
+categories = ["command-line-utilities", "development-tools", "web-programming::http-server"]
+
+# The CLI is independent of the framework: it generates projects that depend
+# on `kerniq-server`, but does not link against it.
+
+[[bin]]
+name = "kerniq"
+path = "src/main.rs"
+
+[dependencies]
+clap.workspace = true
+
+[lints]
+workspace = true

@@ -1,0 +1,32 @@
+[package]
+name = "kerniq-runtime"
+description = "Tokio server lifecycle for Kerniq Server: accept loop, graceful shutdown, background tasks."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+kerniq-core.workspace = true
+axum.workspace = true
+http.workspace = true
+hyper.workspace = true
+hyper-util.workspace = true
+tokio = { workspace = true, features = ["rt", "rt-multi-thread", "net", "time", "signal", "sync", "macros"] }
+tokio-util = { workspace = true, features = ["rt"] }
+tower = { workspace = true, features = ["util"] }
+tracing.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["io-util"] }
+hyper-util = { workspace = true, features = ["client-legacy"] }
+http-body-util.workspace = true
+bytes.workspace = true
+
+[lints]
+workspace = true

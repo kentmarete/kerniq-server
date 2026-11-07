@@ -1,0 +1,13 @@
+[package]
+name = "example-validation"
+version = "0.0.0"
+edition.workspace = true
+publish = false
+
+[dependencies]
+kerniq-server = { path = "../../crates/kerniq-server", features = ["validation"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "time", "sync"] }
+serde = { version = "1", features = ["derive"] }
+validator = { version = "0.21", features = ["derive"] }
+[lints]
+workspace = true

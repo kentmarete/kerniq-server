@@ -1,0 +1,20 @@
+use std::sync::Arc;
+
+use crate::config::AppConfig;
+use crate::services::users::UserService;
+
+/// Shared state. Cloned per request, so every field is cheap to clone.
+#[derive(Clone)]
+pub struct AppState {
+    pub service_name: Arc<str>,
+    pub users: UserService,
+}
+
+impl AppState {
+    pub fn new(config: &AppConfig) -> Self {
+        Self {
+            service_name: config.service_name.as_str().into(),
+            users: UserService::default(),
+        }
+    }
+}

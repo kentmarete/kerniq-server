@@ -1,0 +1,35 @@
+use kerniq_server::prelude::*;
+
+const GREETING: &str = concat!("Hello from ", env!("CARGO_PKG_NAME"));
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    let address = "127.0.0.1:3000";
+    println!("{} listening on http://{address}", env!("CARGO_PKG_NAME"));
+
+    app().run(address).await
+}
+
+fn app() -> App {
+    App::new().get("/", || async { GREETING })
+}
+
+#[cfg(test)]
+mod tests {
+    use http_body_util::BodyExt;
+    use kerniq_server::axum::body::Body;
+    use kerniq_server::http::Request;
+    use tower::ServiceExt;
+
+    #[tokio::test]
+    async fn says_hello() {
+        let response = super::app()
+            .into_axum_router()
+            .oneshot(Request::get("/").body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+        assert_eq!(response.status(), 200);
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        assert_eq!(&body[..], super::GREETING.as_bytes());
+    }
+}

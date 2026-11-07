@@ -1,0 +1,54 @@
+use std::collections::HashMap;
+use std::sync::Arc;
+use std::time::Duration;
+
+use kerniq_server::middleware::MetricsRegistry;
+use kerniq_server::prelude::*;
+use tokio::sync::RwLock;
+
+use crate::routes::Account;
+
+/// Shared state. Cloned per request: every field is an `Arc` or a handle.
+#[derive(Clone)]
+pub struct AppState {
+    pub shutdown: Shutdown,
+    pub metrics: MetricsRegistry,
+    pub accounts: Arc<RwLock<HashMap<String, Account>>>,
+}
+
+impl AppState {
+    pub fn new(shutdown: Shutdown, metrics: MetricsRegistry) -> Self {
+        let mut accounts = HashMap::new();
+        accounts.insert(
+            "acc-001".to_owned(),
+            Account {
+                id: "acc-001".to_owned(),
+                currency: "USD".to_owned(),
+                // Money is stored in minor units (cents), never as floats.
+                balance_minor: 125_000,
+            },
+        );
+        Self {
+            shutdown,
+            metrics,
+            accounts: Arc::new(RwLock::new(accounts)),
+        }
+    }
+}
+
+/// A periodic background job tied to the server lifecycle.
+pub async fn maintenance(state: AppState, shutdown: Shutdown) {
+    let mut interval = tokio::time::interval(Duration::from_secs(60));
+    loop {
+        tokio::select! {
+            _ = interval.tick() => {
+                let accounts = state.accounts.read().await.len();
+                tracing::debug!(accounts, "maintenance tick");
+            }
+            () = shutdown.wait() => {
+                tracing::info!("maintenance task stopped");
+                break;
+            }
+        }
+    }
+}

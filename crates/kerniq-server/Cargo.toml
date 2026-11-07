@@ -1,0 +1,76 @@
+[package]
+name = "kerniq-server"
+description = "A lightweight, asynchronous Rust web framework: Flask-like simplicity on top of Axum, Tower and Tokio."
+readme = "../../README.md"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[features]
+default = ["json", "tracing"]
+# `Json<T>` extractor/response and `Created<T>`.
+json = ["kerniq-http/json"]
+# `Logger` request-logging middleware.
+tracing = ["kerniq-middleware/tracing"]
+# `Cors` middleware.
+cors = ["kerniq-middleware/cors"]
+# `Compression` middleware (gzip, deflate, brotli, zstd).
+compression = ["kerniq-middleware/compression"]
+# WebSocket support (`extract::ws`).
+websocket = ["kerniq-http/websocket"]
+# OpenAPI documents and Swagger UI (`openapi` module).
+openapi = ["dep:kerniq-openapi"]
+# `ValidatedJson` / `ValidatedQuery` extractors.
+validation = ["kerniq-http/validation"]
+# `ServerConfig::from_file` (TOML).
+config-file = ["kerniq-core/config-file"]
+# Everything.
+full = ["json", "tracing", "cors", "compression", "websocket", "openapi", "validation", "config-file"]
+
+[dependencies]
+kerniq-core.workspace = true
+kerniq-http.workspace = true
+kerniq-routing.workspace = true
+kerniq-runtime.workspace = true
+kerniq-middleware.workspace = true
+kerniq-openapi = { workspace = true, optional = true }
+axum.workspace = true
+http.workspace = true
+tokio = { workspace = true, features = ["net"] }
+tower.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+bytes.workspace = true
+futures-util = { workspace = true, features = ["sink", "std"] }
+http-body-util.workspace = true
+hyper-util = { workspace = true, features = ["client-legacy"] }
+serde.workspace = true
+serde_json.workspace = true
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time", "sync", "io-util"] }
+tokio-tungstenite.workspace = true
+tower = { workspace = true, features = ["util", "timeout", "limit"] }
+tower-http = { workspace = true, features = ["set-header", "cors", "request-id", "trace"] }
+utoipa = { workspace = true }
+validator.workspace = true
+
+[[test]]
+name = "extractors"
+required-features = ["json"]
+
+[[test]]
+name = "interop"
+required-features = ["json"]
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints]
+workspace = true

@@ -1,0 +1,96 @@
+//! A REST API for users, kept in memory.
+//!
+//! Try it:
+//!
+//! ```sh
+//! curl -X POST localhost:3000/users -H 'content-type: application/json' -d '{"name":"Ada","email":"ada@example.com"}'
+//! curl localhost:3000/users
+//! curl localhost:3000/users/1
+//! ```
+
+mod handlers;
+mod models;
+mod store;
+
+use kerniq_server::prelude::*;
+
+use crate::store::Store;
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    let address = "127.0.0.1:3000";
+    println!("{} listening on http://{address}", env!("CARGO_PKG_NAME"));
+
+    app(Store::default()).run(address).await
+}
+
+pub fn app(store: Store) -> App<Store> {
+    App::new()
+        .state(store)
+        .get("/health", || async { "OK" })
+        .mount(
+            "/users",
+            Router::new()
+                .get("/", handlers::list_users)
+                .post("/", handlers::create_user)
+                .get("/{id}", handlers::get_user)
+                .put("/{id}", handlers::update_user)
+                .delete("/{id}", handlers::delete_user),
+        )
+}
+
+#[cfg(test)]
+mod tests {
+    use http_body_util::BodyExt;
+    use kerniq_server::axum::body::Body;
+    use kerniq_server::http::Request;
+    use tower::ServiceExt;
+
+    use super::*;
+
+    async fn call(
+        router: &kerniq_server::axum::Router,
+        request: Request<Body>,
+    ) -> (u16, serde_json::Value) {
+        let response = router.clone().oneshot(request).await.unwrap();
+        let status = response.status().as_u16();
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        (
+            status,
+            serde_json::from_slice(&body).unwrap_or(serde_json::Value::Null),
+        )
+    }
+
+    #[tokio::test]
+    async fn user_lifecycle() {
+        let router = app(Store::default()).into_axum_router();
+
+        let create = Request::post("/users")
+            .header("content-type", "application/json")
+            .body(Body::from(r#"{"name":"Ada","email":"ada@example.com"}"#))
+            .unwrap();
+        let (status, user) = call(&router, create).await;
+        assert_eq!(status, 201);
+        assert_eq!(user["name"], "Ada");
+
+        let (status, users) =
+            call(&router, Request::get("/users").body(Body::empty()).unwrap()).await;
+        assert_eq!(status, 200);
+        assert_eq!(users.as_array().unwrap().len(), 1);
+
+        let (status, error) = call(
+            &router,
+            Request::get("/users/99").body(Body::empty()).unwrap(),
+        )
+        .await;
+        assert_eq!(status, 404);
+        assert_eq!(error["error"]["code"], "USER_NOT_FOUND");
+
+        let (status, _) = call(
+            &router,
+            Request::delete("/users/1").body(Body::empty()).unwrap(),
+        )
+        .await;
+        assert_eq!(status, 204);
+    }
+}

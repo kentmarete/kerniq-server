@@ -1,0 +1,54 @@
+use kerniq_server::prelude::*;
+use serde::Serialize;
+
+use crate::state::AppState;
+
+#[derive(Debug, Clone, Serialize)]
+pub struct Account {
+    pub id: String,
+    pub currency: String,
+    pub balance_minor: i64,
+}
+
+pub fn router() -> Router<AppState> {
+    Router::new()
+        .get("/health/live", || async { "OK" })
+        .get("/health/ready", ready)
+        .get("/metrics", metrics)
+        .mount(
+            "/api/v1",
+            Router::new().group(|api| {
+                api.get("/accounts/{id}", get_account);
+            }),
+        )
+}
+
+/// Readiness fails as soon as shutdown begins, so load balancers stop
+/// routing new traffic while in-flight requests drain.
+async fn ready(State(state): State<AppState>) -> Result<&'static str> {
+    if state.shutdown.is_triggered() {
+        Err(Error::service_unavailable("Shutting down"))
+    } else {
+        Ok("READY")
+    }
+}
+
+async fn metrics(State(state): State<AppState>) -> String {
+    state.metrics.render()
+}
+
+async fn get_account(
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+) -> Result<Json<Account>> {
+    state
+        .accounts
+        .read()
+        .await
+        .get(&id)
+        .cloned()
+        .map(Json)
+        .ok_or_else(|| {
+            Error::not_found("The requested account does not exist").with_code("ACCOUNT_NOT_FOUND")
+        })
+}

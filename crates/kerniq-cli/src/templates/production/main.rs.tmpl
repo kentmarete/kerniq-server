@@ -1,0 +1,98 @@
+//! {{name}}: a production-ready Kerniq service.
+//!
+//! - Configuration: `kerniq.toml` (optional), overridden by `KERNIQ_*`
+//!   environment variables.
+//! - Logging: `RUST_LOG` filter, `LOG_FORMAT=json` for structured logs.
+//! - Probes: `GET /health/live`, `GET /health/ready` (fails during shutdown).
+//! - Metrics: `GET /metrics` (Prometheus text format).
+//! - Graceful shutdown on SIGTERM / Ctrl+C.
+
+mod config;
+mod routes;
+mod state;
+
+use kerniq_server::prelude::*;
+
+use crate::state::AppState;
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    init_tracing();
+    let config = config::load()?;
+    let address = config.address();
+    tracing::info!(%address, service = env!("CARGO_PKG_NAME"), "starting");
+
+    app(config).run(address).await
+}
+
+pub fn app(config: ServerConfig) -> App<AppState> {
+    let metrics = Metrics::new();
+    let app = App::new();
+    let state = AppState::new(app.shutdown_handle(), metrics.registry());
+
+    app.config(config)
+        .state(state.clone())
+        // Middleware runs in declaration order (first = outermost).
+        .middleware(RequestId::new())
+        .middleware(Logger::new())
+        .middleware(metrics)
+        .middleware(SecurityHeaders::new())
+        .middleware(Cors::default())
+        .middleware(Compression::new())
+        .merge(routes::router())
+        .background_task("maintenance", move |shutdown| {
+            state::maintenance(state, shutdown)
+        })
+}
+
+fn init_tracing() {
+    use tracing_subscriber::EnvFilter;
+
+    let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
+    let builder = tracing_subscriber::fmt().with_env_filter(filter);
+    if std::env::var("LOG_FORMAT").as_deref() == Ok("json") {
+        builder.json().init();
+    } else {
+        builder.init();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use http_body_util::BodyExt;
+    use kerniq_server::axum::body::Body;
+    use kerniq_server::http::Request;
+    use tower::ServiceExt;
+
+    use super::*;
+
+    async fn get(router: &kerniq_server::axum::Router, uri: &str) -> (u16, String) {
+        let response = router
+            .clone()
+            .oneshot(Request::get(uri).body(Body::empty()).unwrap())
+            .await
+            .unwrap();
+        let status = response.status().as_u16();
+        let body = response.into_body().collect().await.unwrap().to_bytes();
+        (status, String::from_utf8_lossy(&body).into_owned())
+    }
+
+    #[tokio::test]
+    async fn probes_metrics_and_accounts() {
+        let router = app(ServerConfig::default()).into_axum_router();
+
+        assert_eq!(get(&router, "/health/live").await.0, 200);
+        assert_eq!(get(&router, "/health/ready").await.0, 200);
+
+        let (status, body) = get(&router, "/api/v1/accounts/acc-001").await;
+        assert_eq!(status, 200);
+        assert!(body.contains("\"balance_minor\""), "{body}");
+
+        let (status, body) = get(&router, "/api/v1/accounts/missing").await;
+        assert_eq!(status, 404);
+        assert!(body.contains("ACCOUNT_NOT_FOUND"), "{body}");
+
+        let (_, metrics) = get(&router, "/metrics").await;
+        assert!(metrics.contains("http_requests_total"), "{metrics}");
+    }
+}

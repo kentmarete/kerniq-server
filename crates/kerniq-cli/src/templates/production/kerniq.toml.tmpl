@@ -1,0 +1,9 @@
+# Server configuration. Every value can be overridden with a KERNIQ_*
+# environment variable (for example KERNIQ_PORT=9000). Durations are seconds.
+host = "0.0.0.0"
+port = 8080
+request_timeout = 30
+max_body_size = 1048576
+max_connections = 10000
+max_concurrent_requests = 1024
+shutdown_timeout = 20

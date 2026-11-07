@@ -1,0 +1,56 @@
+[package]
+name = "kerniq-benches"
+description = "Benchmarks comparing Kerniq Server with equivalent native Axum applications."
+version = "0.0.0"
+edition.workspace = true
+publish = false
+
+[lib]
+path = "src/lib.rs"
+bench = false
+
+[[bin]]
+name = "alloc-count"
+path = "src/bin/alloc-count.rs"
+bench = false
+
+[[bin]]
+name = "bench-server"
+path = "src/bin/bench-server.rs"
+bench = false
+
+[[bin]]
+name = "loadgen"
+path = "src/bin/loadgen.rs"
+bench = false
+
+[[bench]]
+name = "routing"
+path = "routing.rs"
+harness = false
+
+[[bench]]
+name = "middleware"
+path = "middleware.rs"
+harness = false
+
+[dependencies]
+kerniq-server = { path = "../crates/kerniq-server" }
+axum = { workspace = true, features = ["json"] }
+bytes.workspace = true
+http.workspace = true
+http-body-util.workspace = true
+hyper = { workspace = true, features = ["client"] }
+hyper-util = { workspace = true, features = ["client-legacy"] }
+serde.workspace = true
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time", "net", "signal", "sync"] }
+tower = { workspace = true, features = ["util", "timeout"] }
+tower-http = { workspace = true, features = ["request-id", "set-header", "timeout"] }
+
+[dev-dependencies]
+criterion.workspace = true
+
+# The allocation counter needs `unsafe impl GlobalAlloc`, so this crate does
+# not inherit the workspace's `unsafe_code = "forbid"`.
+[lints.clippy]
+all = { level = "warn", priority = -1 }

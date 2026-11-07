@@ -1,0 +1,16 @@
+use std::path::Path;
+
+use kerniq_server::prelude::*;
+
+const CONFIG_FILE: &str = "kerniq.toml";
+
+/// Loads the server configuration: defaults, then `kerniq.toml` if present,
+/// then `KERNIQ_*` environment variables. Secrets never belong in the file.
+pub fn load() -> Result<ServerConfig> {
+    let config = if Path::new(CONFIG_FILE).exists() {
+        ServerConfig::from_file(CONFIG_FILE)?
+    } else {
+        ServerConfig::default()
+    };
+    Ok(config.apply_env()?)
+}

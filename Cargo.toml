@@ -7,6 +7,7 @@ members = [
     "crates/kerniq-runtime",
     "crates/kerniq-middleware",
     "crates/kerniq-openapi",
+    "crates/kerniq-macros",
     "crates/kerniq-server",
     "crates/kerniq-cli",
     "benches",
@@ -32,6 +33,7 @@ kerniq-routing = { path = "crates/kerniq-routing", version = "0.1.0" }
 kerniq-runtime = { path = "crates/kerniq-runtime", version = "0.1.0" }
 kerniq-middleware = { path = "crates/kerniq-middleware", version = "0.1.0", default-features = false }
 kerniq-openapi = { path = "crates/kerniq-openapi", version = "0.1.0" }
+kerniq-macros = { path = "crates/kerniq-macros", version = "0.1.0" }
 kerniq-server = { path = "crates/kerniq-server", version = "0.1.0", default-features = false }
 
 # HTTP stack
@@ -57,6 +59,11 @@ serde_json = "1.0.142"
 thiserror = "2.0.12"
 tracing = { version = "0.1.41", default-features = false, features = ["std"] }
 toml = { version = "1.0", default-features = false, features = ["parse", "serde"] }
+
+# Procedural macros
+proc-macro2 = "1.0.95"
+quote = "1.0.40"
+syn = { version = "2.0.104", default-features = false, features = ["clone-impls", "full", "parsing", "printing", "proc-macro"] }
 
 # Optional capabilities
 utoipa = { version = "6.0.0", default-features = false, features = ["macros"] }

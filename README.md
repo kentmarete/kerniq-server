@@ -200,12 +200,12 @@ errors](docs/handlers.md) for the full guide.
 | Built-in middleware | Logger, RequestId, Timeout, BodyLimit, ConcurrencyLimit, Cors, Compression, SecurityHeaders, RateLimit, Auth, Metrics (Prometheus) |
 | Lifecycle | Graceful shutdown (SIGINT/SIGTERM), bounded drain, connection limits, background tasks, `run` / `run_blocking` |
 | Configuration | Builder, `KERNIQ_*` environment variables, TOML files |
-| Optional | WebSockets, OpenAPI + Swagger UI (Utoipa), validation (`validator`) |
+| Optional | WebSockets, OpenAPI + Swagger UI (Utoipa), validation (`validator`), `#[authorize]` role/permission checks |
 | Interop | `into_axum_router`, `mount_axum`, native Axum handlers, extractors and layers |
 | CLI | `kerniq new` (basic, rest, modular, production), `dev` (auto-restart), `build`, `check`, `test` |
 
 Cargo features: `json` and `tracing` (default), `cors`, `compression`,
-`websocket`, `openapi`, `validation`, `config-file`, `full`. With
+`websocket`, `openapi`, `validation`, `config-file`, `macros`, `full`. With
 `default-features = false` the dependency tree is about half the size of the
 full one.
 
@@ -259,6 +259,7 @@ are in [docs/performance.md](docs/performance.md). Run
 * [Extractors](docs/extractors.md) (including validation)
 * [Shared state](docs/state-management.md)
 * [Middleware](docs/middleware.md) (including custom middleware)
+* [Authorization](docs/authorization.md) (roles and permissions)
 * [Axum and Tower interoperability](docs/axum-interop.md)
 * [Runtime, lifecycle and graceful shutdown](docs/runtime.md)
 * [WebSockets](docs/websockets.md)

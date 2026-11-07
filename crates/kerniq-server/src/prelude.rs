@@ -1,6 +1,8 @@
 //! Everything most applications need: `use kerniq_server::prelude::*;`
 
 pub use crate::App;
+#[cfg(feature = "macros")]
+pub use crate::authorize;
 pub use kerniq_core::{Error, OptionExt, Result, ResultExt, ServerConfig};
 
 pub use kerniq_routing::{Middleware, Router};

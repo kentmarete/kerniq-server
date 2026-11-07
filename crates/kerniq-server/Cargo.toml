@@ -30,8 +30,10 @@ openapi = ["dep:kerniq-openapi"]
 validation = ["kerniq-http/validation"]
 # `ServerConfig::from_file` (TOML).
 config-file = ["kerniq-core/config-file"]
+# `#[authorize(..)]` role/permission attribute for handlers.
+macros = ["dep:kerniq-macros"]
 # Everything.
-full = ["json", "tracing", "cors", "compression", "websocket", "openapi", "validation", "config-file"]
+full = ["json", "tracing", "cors", "compression", "websocket", "openapi", "validation", "config-file", "macros"]
 
 [dependencies]
 kerniq-core.workspace = true
@@ -40,6 +42,7 @@ kerniq-routing.workspace = true
 kerniq-runtime.workspace = true
 kerniq-middleware.workspace = true
 kerniq-openapi = { workspace = true, optional = true }
+kerniq-macros = { workspace = true, optional = true }
 axum.workspace = true
 http.workspace = true
 tokio = { workspace = true, features = ["net"] }
@@ -67,6 +70,10 @@ required-features = ["json"]
 [[test]]
 name = "interop"
 required-features = ["json"]
+
+[[test]]
+name = "authorization"
+required-features = ["macros"]
 
 [package.metadata.docs.rs]
 all-features = true

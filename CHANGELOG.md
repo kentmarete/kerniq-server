@@ -6,6 +6,17 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Opt-in authorization: `Authorities` (roles and permissions of an
+  identity), `Policy<T>` and the `Authorized<T, P>` extractor, which rejects
+  with `401` without an identity and `403` when the policy fails.
+- `macros` feature with the `#[authorize(..)]` handler attribute, in the
+  spirit of Spring's `@PreAuthorize`: `has_role`, `has_any_role`,
+  `has_all_roles`, `has_permission`, `has_any_permission`,
+  `has_all_permissions`, `authenticated()`, `check(fn)`, combined with
+  `&&`, `||` and `!`. New crate `kerniq-macros`.
+
 ## [0.1.0] - 2026-11-07
 
 First release.

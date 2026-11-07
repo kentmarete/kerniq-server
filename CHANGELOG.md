@@ -16,6 +16,10 @@ adheres to [Semantic Versioning](https://semver.org/).
   `has_all_roles`, `has_permission`, `has_any_permission`,
   `has_all_permissions`, `authenticated()`, `check(fn)`, combined with
   `&&`, `||` and `!`. New crate `kerniq-macros`.
+- `Require<T>` middleware for router-level role and permission rules
+  (`Require::<User>::role("ADMIN")`, `any_role`, `permission`, `check`,
+  `policy::<P>()`, `.and`, `.or`, `.message`), the counterpart of Spring
+  Security's `requestMatchers(..).hasRole(..)`.
 
 ## [0.1.0] - 2026-11-07
 

@@ -43,7 +43,9 @@
 //!   permissions,
 //! * [`Policy`] — a type-level rule over an identity,
 //! * [`Authorized<T, P>`] — extractor that requires an identity satisfying
-//!   policy `P`, rejecting with `403 FORBIDDEN` otherwise.
+//!   policy `P`, rejecting with `403 FORBIDDEN` otherwise,
+//! * [`Require<T>`] — middleware applying a rule to every route of a router
+//!   (`Require::<User>::role("ADMIN")`).
 //!
 //! The `#[authorize(..)]` attribute in `kerniq-server` (feature `macros`)
 //! generates the policy from an expression such as
@@ -64,6 +66,10 @@ use http::request::Parts;
 use kerniq_core::Error;
 use kerniq_routing::Middleware;
 use tower::{Layer, Service};
+
+mod require;
+
+pub use require::{Require, RequireFuture, RequireLayer, RequireService};
 
 /// Authenticates a request from its head (method, URI, headers,
 /// extensions).

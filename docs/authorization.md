@@ -8,9 +8,11 @@ There are two equivalent ways to use it:
 * the `#[authorize(..)]` attribute (feature `macros`), for declarative rules
   such as `has_any_role("USER", "ADMIN")`,
 * the `Authorized<T, P>` extractor with a hand-written `Policy`, for rules
-  that need code.
+  that need code,
+* the `Require<T>` middleware, for one rule shared by every route of a
+  router (no feature needed).
 
-Routes without either are unaffected.
+Routes without any of them are unaffected.
 
 ## Enabling
 
@@ -163,6 +165,107 @@ policy type `P` next to the function. It therefore supports free `async fn`
 handlers (not methods or generic functions) and uses one of Axum's 16
 extractor slots. Invalid rules, unknown rule names and identity types that
 do not implement `Authorities` are compile errors.
+
+## Protecting route groups: `Require`
+
+Spring Security usually centralizes rules as path matchers:
+
+```java
+.requestMatchers("/api/auth/**", "/api/test/all").permitAll()
+.requestMatchers("/api/test/user").hasRole("USER")
+.requestMatchers("/api/test/admin").hasRole("ADMIN")
+.requestMatchers("/api/test/users").hasAuthority("READ_USER")
+.anyRequest().authenticated()
+```
+
+In Kerniq, middleware is scoped to routers, so the router structure is the
+matcher list: routes that share a requirement live in one router, and
+`Require` is applied to it. There are no path patterns to keep in sync with
+the routes, and a new route gets exactly the protection of the router it is
+added to.
+
+```rust
+use kerniq_server::prelude::*;
+use kerniq_server::middleware::auth::{Auth, Authorities, Require};
+
+#[derive(Clone)]
+struct User { roles: Vec<String>, permissions: Vec<String> }
+
+impl Authorities for User {
+    fn has_role(&self, role: &str) -> bool { self.roles.iter().any(|r| r == role) }
+    fn has_permission(&self, p: &str) -> bool { self.permissions.iter().any(|x| x == p) }
+}
+
+# async fn login() {} async fn all() {} async fn me() {}
+# async fn user_board() {} async fn admin_board() {} async fn list_users() {}
+let auth = Auth::bearer(|token: String| async move {
+    // Validate the token and load roles and permissions.
+    let _ = token;
+    Ok::<_, Error>(User { roles: vec!["USER".into()], permissions: vec![] })
+});
+
+// permitAll()
+let public = Router::new()
+    .get("/auth/login", login)
+    .get("/test/all", all);
+
+// anyRequest().authenticated(): everything below requires `Auth`.
+let protected = Router::new()
+    .middleware(auth)
+    .get("/test/me", me)
+    .merge(
+        Router::new()
+            .middleware(Require::<User>::role("USER"))
+            .get("/test/user", user_board),
+    )
+    .merge(
+        Router::new()
+            .middleware(Require::<User>::role("ADMIN"))
+            .get("/test/admin", admin_board),
+    )
+    .merge(
+        Router::new()
+            .middleware(Require::<User>::permission("READ_USER"))
+            .get("/test/users", list_users),
+    );
+
+let app = App::new()
+    .mount("/api", public)
+    .mount("/api", protected);
+```
+
+`Require` reads the identity that `Auth` stored, so `Auth` must run first:
+declare it earlier on the same router (first declared is outermost) or on
+an enclosing router, as above. If no identity is present, `Require` responds
+`401`, so a misordered stack fails closed.
+
+| Constructor | Passes when the identity |
+|---|---|
+| `Require::authenticated()` | exists |
+| `Require::role("A")` | has role `A` |
+| `Require::any_role(["A", "B"])` | has at least one of the roles |
+| `Require::all_roles(["A", "B"])` | has every role |
+| `Require::permission("p")` | has permission `p` |
+| `Require::any_permission(["p", "q"])` | has at least one of the permissions |
+| `Require::all_permissions(["p", "q"])` | has every permission |
+| `Require::check(\|user: &User\| ..)` | makes the closure return `true` |
+| `Require::policy::<P>()` | satisfies `Policy` `P` (its error is sent as-is) |
+
+Rules combine with `.and(..)` and `.or(..)`, and `.message(..)` sets the
+`403` message:
+
+```rust
+use kerniq_server::middleware::auth::{Authorities, Require};
+
+# #[derive(Clone)] struct User;
+# impl Authorities for User { fn has_role(&self, _: &str) -> bool { true } }
+let support = Require::<User>::role("ADMIN")
+    .or(Require::role("USER").and(Require::permission("READ_USER")))
+    .message("Support staff only");
+```
+
+`Require` and `#[authorize]` compose: a router can require `USER` for all
+its routes while one handler additionally requires `ADMIN`.
 
 ## Without macros: `Policy` and `Authorized`
 

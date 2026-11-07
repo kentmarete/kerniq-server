@@ -6,6 +6,12 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+
+- Guide for connecting databases and message brokers
+  (`docs/integrations.md`): PostgreSQL/MySQL/SQLite with `sqlx`, Redis,
+  MongoDB, Kafka and RabbitMQ, with a summary in the README.
+
 ## [0.1.0] - 2026-11-07
 
 First release.

@@ -1,0 +1,28 @@
+[package]
+name = "kerniq-telemetry"
+description = "Shared telemetry conventions for Kerniq Server: metric names, bounded attributes, resource metadata and AI inference instruments."
+readme = "README.md"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation = "https://docs.rs/kerniq-telemetry"
+authors.workspace = true
+keywords = ["observability", "opentelemetry", "metrics", "telemetry", "kerniq"]
+categories = ["development-tools::debugging", "web-programming::http-server"]
+
+[dependencies]
+http.workspace = true
+opentelemetry = { workspace = true, features = ["metrics"] }
+
+[dev-dependencies]
+opentelemetry_sdk = { workspace = true, features = ["metrics", "testing"] }
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints]
+workspace = true

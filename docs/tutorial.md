@@ -29,12 +29,12 @@ changes instead, add `--kerniq-path /path/to/kerniq-server` or
 `--kerniq-git <url>` to `kerniq new`.
 
 The generated `Cargo.toml` already has what this tutorial needs. The CLI
-writes the latest Kerniq release; in Cargo, `"0.1.2"` means 0.1.2 or any
+writes the latest Kerniq release; in Cargo, `"0.1.3"` means 0.1.3 or any
 later 0.1.x:
 
 ```toml
 [dependencies]
-kerniq-server = { version = "0.1.2" }
+kerniq-server = { version = "0.1.3" }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "time"] }
 

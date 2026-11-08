@@ -1,0 +1,7 @@
+# Keep build contexts small (observability/demo.Dockerfile builds from the
+# repository root).
+target
+target-*
+.git
+**/*.rs.bk
+.DS_Store

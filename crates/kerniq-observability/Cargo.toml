@@ -1,0 +1,103 @@
+[package]
+name = "kerniq-observability"
+description = "Vendor-neutral observability for Kerniq Server: OpenTelemetry metrics, logs and traces, OTLP export and Prometheus scraping behind one builder."
+readme = "README.md"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation = "https://docs.rs/kerniq-observability"
+authors.workspace = true
+keywords = ["observability", "opentelemetry", "prometheus", "tracing", "metrics"]
+categories = ["development-tools::debugging", "web-programming::http-server"]
+
+[features]
+default = ["metrics", "logs", "tracing"]
+# OpenTelemetry metrics SDK and the HTTP server metrics.
+metrics = [
+    "dep:opentelemetry_sdk",
+    "opentelemetry_sdk?/metrics",
+    "opentelemetry/metrics",
+    "opentelemetry-otlp?/metrics",
+    "kerniq-observability-axum/metrics",
+]
+# Console logging (JSON, pretty, compact) through `tracing-subscriber`.
+logs = [
+    "dep:tracing-subscriber",
+    "dep:tracing-appender",
+    "dep:serde_json",
+    "tracing-subscriber?/fmt",
+    "tracing-subscriber?/json",
+    "dep:opentelemetry_sdk",
+    "dep:opentelemetry-appender-tracing",
+    "opentelemetry_sdk?/logs",
+    "opentelemetry/logs",
+    "opentelemetry-otlp?/logs",
+]
+# Distributed tracing: `tracing` spans exported as OpenTelemetry spans.
+tracing = [
+    "dep:opentelemetry_sdk",
+    "opentelemetry_sdk?/trace",
+    "opentelemetry/trace",
+    "opentelemetry-otlp?/trace",
+    "dep:tracing-opentelemetry",
+    "dep:tracing-subscriber",
+    "kerniq-observability-axum/tracing",
+]
+# OTLP export (gRPC and HTTP/protobuf) for every enabled signal.
+otlp = [
+    "dep:opentelemetry_sdk",
+    "dep:opentelemetry-otlp",
+    "opentelemetry-otlp/grpc-tonic",
+    "opentelemetry-otlp/http-proto",
+    "opentelemetry-otlp/reqwest-blocking-client",
+    "opentelemetry-otlp/gzip-tonic",
+    "opentelemetry-otlp/gzip-http",
+    "opentelemetry-otlp/internal-logs",
+    "opentelemetry_sdk/internal-logs",
+]
+# TLS for OTLP (rustls with the platform's root certificates).
+otlp-tls = [
+    "otlp",
+    "opentelemetry-otlp/tls-ring",
+    "opentelemetry-otlp/tls-roots",
+    "opentelemetry-otlp/reqwest-rustls",
+]
+# Prometheus scrape endpoint.
+prometheus = ["metrics", "dep:kerniq-observability-prometheus"]
+# Tokio runtime and process metrics (CPU, memory, file descriptors).
+runtime = ["metrics", "dep:cpu-time", "dep:memory-stats"]
+# Everything.
+full = ["metrics", "logs", "tracing", "otlp", "prometheus", "runtime"]
+
+[dependencies]
+kerniq-core.workspace = true
+kerniq-telemetry.workspace = true
+kerniq-observability-axum = { workspace = true }
+kerniq-observability-prometheus = { workspace = true, optional = true }
+opentelemetry.workspace = true
+opentelemetry_sdk = { workspace = true, optional = true }
+opentelemetry-otlp = { workspace = true, optional = true }
+opentelemetry-appender-tracing = { workspace = true, optional = true }
+tracing-opentelemetry = { workspace = true, optional = true }
+tracing-subscriber = { workspace = true, optional = true, features = ["std", "registry", "env-filter", "ansi"] }
+tracing-appender = { workspace = true, optional = true }
+serde_json = { workspace = true, optional = true }
+cpu-time = { workspace = true, optional = true }
+memory-stats = { workspace = true, optional = true }
+http.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["rt", "time"] }
+tracing.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "net", "io-util"] }
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints]
+workspace = true

@@ -1,0 +1,96 @@
+# One Collector, many destinations.
+#
+# The application exports OTLP once; the Collector fans every signal out to
+# several backends. Add or remove exporters here without redeploying the
+# application. Credentials come from environment variables, never from the
+# application.
+#
+# Requires the `otelcol-contrib` distribution (vendor exporters).
+#
+#   ELASTIC_OTLP_ENDPOINT, ELASTIC_API_KEY      Elastic (managed OTLP / APM)
+#   SPLUNK_HEC_ENDPOINT, SPLUNK_HEC_TOKEN       Splunk
+#   SUMOLOGIC_ENDPOINT                          Sumo Logic (HTTP source URL)
+#   APPLICATIONINSIGHTS_CONNECTION_STRING       Azure Monitor
+#
+# Delete the pipelines' exporters you do not use: an exporter whose backend
+# is unreachable retries with backoff and then drops, bounded by its
+# sending_queue, without affecting the others.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 80
+    spike_limit_percentage: 25
+  batch:
+    send_batch_size: 8192
+    timeout: 5s
+
+exporters:
+  # Local open-source stack.
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    resource_to_telemetry_conversion:
+      enabled: true
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+
+  # Elastic accepts OTLP directly (Elastic Cloud managed OTLP endpoint or an
+  # APM Server); no Elastic SDK in the application.
+  otlphttp/elastic:
+    endpoint: ${env:ELASTIC_OTLP_ENDPOINT}
+    headers:
+      Authorization: "ApiKey ${env:ELASTIC_API_KEY}"
+    sending_queue:
+      enabled: true
+      queue_size: 5000
+    retry_on_failure:
+      enabled: true
+      max_elapsed_time: 120s
+
+  # Splunk HTTP Event Collector.
+  splunk_hec:
+    endpoint: ${env:SPLUNK_HEC_ENDPOINT}
+    token: ${env:SPLUNK_HEC_TOKEN}
+    source: kerniq
+    sourcetype: otel
+    sending_queue:
+      enabled: true
+      queue_size: 5000
+
+  # Sumo Logic hosted HTTP source.
+  sumologic:
+    endpoint: ${env:SUMOLOGIC_ENDPOINT}
+    sending_queue:
+      enabled: true
+      queue_size: 5000
+
+  # Azure Monitor / Application Insights.
+  azuremonitor:
+    connection_string: ${env:APPLICATIONINSIGHTS_CONNECTION_STRING}
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus, otlphttp/elastic, splunk_hec, sumologic, azuremonitor]
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/tempo, otlphttp/elastic, splunk_hec, sumologic, azuremonitor]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/loki, otlphttp/elastic, splunk_hec, sumologic, azuremonitor]

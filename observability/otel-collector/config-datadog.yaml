@@ -1,0 +1,60 @@
+# OpenTelemetry Collector → Datadog.
+#
+# The application keeps exporting plain OTLP; no Datadog SDK or agent
+# library is linked into it. Requires `otelcol-contrib` (or the Datadog
+# Agent's embedded Collector, which accepts the same OTLP input).
+#
+#   DD_API_KEY   Datadog API key
+#   DD_SITE      datadoghq.com, datadoghq.eu, us5.datadoghq.com, ...
+#
+# The Datadog connector computes APM trace metrics (hits, errors,
+# latency) from spans before sampling, so Datadog's service pages work.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 80
+    spike_limit_percentage: 25
+  batch:
+    send_batch_max_size: 1000
+    send_batch_size: 100
+    timeout: 10s
+
+connectors:
+  datadog/connector:
+
+exporters:
+  datadog:
+    api:
+      key: ${env:DD_API_KEY}
+      site: ${env:DD_SITE}
+    metrics:
+      # Kerniq exports cumulative histograms; Datadog stores distributions.
+      histograms:
+        mode: distributions
+      resource_attributes_as_tags: true
+    traces:
+      span_name_as_resource_name: true
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [datadog/connector, datadog]
+    metrics:
+      receivers: [otlp, datadog/connector]
+      processors: [memory_limiter, batch]
+      exporters: [datadog]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [datadog]

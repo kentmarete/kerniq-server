@@ -35,7 +35,11 @@ path = "middleware.rs"
 harness = false
 
 [dependencies]
-kerniq-server = { path = "../crates/kerniq-server" }
+kerniq-server = { path = "../crates/kerniq-server", features = ["full-observability"] }
+opentelemetry_sdk = { workspace = true, features = ["trace", "logs"] }
+futures-util = { workspace = true, features = ["std"] }
+tracing.workspace = true
+tracing-subscriber = { workspace = true, features = ["registry", "std"] }
 axum = { workspace = true, features = ["json"] }
 bytes.workspace = true
 http.workspace = true

@@ -10,12 +10,17 @@ members = [
     "crates/kerniq-macros",
     "crates/kerniq-server",
     "crates/kerniq-cli",
+    "crates/kerniq-telemetry",
+    "crates/kerniq-observability",
+    "crates/kerniq-observability-axum",
+    "crates/kerniq-observability-prometheus",
+    "crates/kerniq-observability-testing",
     "benches",
     "examples/*",
 ]
 
 [workspace.package]
-version = "0.1.2"
+version = "0.1.3"
 edition = "2024"
 rust-version = "1.88"
 license = "MIT OR Apache-2.0"
@@ -27,18 +32,24 @@ categories = ["web-programming::http-server", "asynchronous", "network-programmi
 
 [workspace.dependencies]
 # Internal crates
-kerniq-core = { path = "crates/kerniq-core", version = "0.1.2" }
-kerniq-http = { path = "crates/kerniq-http", version = "0.1.2", default-features = false }
-kerniq-routing = { path = "crates/kerniq-routing", version = "0.1.2" }
-kerniq-runtime = { path = "crates/kerniq-runtime", version = "0.1.2" }
-kerniq-middleware = { path = "crates/kerniq-middleware", version = "0.1.2", default-features = false }
-kerniq-openapi = { path = "crates/kerniq-openapi", version = "0.1.2" }
-kerniq-macros = { path = "crates/kerniq-macros", version = "0.1.2" }
+kerniq-core = { path = "crates/kerniq-core", version = "0.1.3" }
+kerniq-http = { path = "crates/kerniq-http", version = "0.1.3", default-features = false }
+kerniq-routing = { path = "crates/kerniq-routing", version = "0.1.3" }
+kerniq-runtime = { path = "crates/kerniq-runtime", version = "0.1.3" }
+kerniq-middleware = { path = "crates/kerniq-middleware", version = "0.1.3", default-features = false }
+kerniq-openapi = { path = "crates/kerniq-openapi", version = "0.1.3" }
+kerniq-macros = { path = "crates/kerniq-macros", version = "0.1.3" }
+kerniq-telemetry = { path = "crates/kerniq-telemetry", version = "0.1.3" }
+kerniq-observability = { path = "crates/kerniq-observability", version = "0.1.3", default-features = false }
+kerniq-observability-axum = { path = "crates/kerniq-observability-axum", version = "0.1.3", default-features = false }
+kerniq-observability-prometheus = { path = "crates/kerniq-observability-prometheus", version = "0.1.3" }
+kerniq-observability-testing = { path = "crates/kerniq-observability-testing", version = "0.1.3" }
 
 # HTTP stack
 axum = { version = "0.8.9", default-features = false, features = ["tokio", "http1", "http2", "query", "original-uri", "matched-path"] }
 http = "1.5"
 axum-core = "0.5.6"
+http-body = "1.1"
 http-body-util = "0.1.5"
 bytes = "1.12"
 pin-project-lite = "0.2.17"
@@ -58,6 +69,19 @@ serde_json = "1.0.154"
 thiserror = "2.0.21"
 tracing = { version = "0.1.44", default-features = false, features = ["std"] }
 toml = { version = "1.2", default-features = false, features = ["parse", "serde"] }
+
+# Observability (OpenTelemetry 0.33 family; keep these versions in lockstep)
+opentelemetry = { version = "0.33.1", default-features = false }
+opentelemetry_sdk = { version = "0.33.1", default-features = false }
+opentelemetry-otlp = { version = "0.33.1", default-features = false }
+opentelemetry-prometheus = "0.33.1"
+opentelemetry-appender-tracing = { version = "0.33.1", default-features = false }
+tracing-opentelemetry = { version = "0.34.0", default-features = false }
+tracing-subscriber = { version = "0.3.23", default-features = false }
+prometheus = { version = "0.14.0", default-features = false }
+tracing-appender = "0.2.5"
+cpu-time = "1.0.0"
+memory-stats = "1.2.0"
 
 # Procedural macros
 proc-macro2 = "1.0.107"

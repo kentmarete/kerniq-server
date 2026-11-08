@@ -5,6 +5,8 @@
 //! built on these layers, so the comparison measures Kerniq's composition
 //! overhead, not different middleware implementations).
 
+pub mod observability;
+
 use std::time::Duration;
 
 use axum::routing::get;

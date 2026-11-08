@@ -1,0 +1,116 @@
+# Kerniq Observe local environment.
+#
+# Two independent architectures, selected with compose profiles:
+#
+#   Option A — native Prometheus scraping (no Collector):
+#     docker compose -f observability/docker-compose.yml --profile prometheus up --build
+#
+#   Option B — OTLP through the OpenTelemetry Collector (metrics, traces, logs):
+#     docker compose -f observability/docker-compose.yml --profile otlp up --build
+#
+# Then open Grafana at http://localhost:3001 (anonymous admin; local use
+# only) → Dashboards → Kerniq. The demo API is on http://localhost:3000.
+# A load generator keeps every dashboard populated.
+#
+# Image versions are pinned; bump them deliberately.
+
+name: kerniq-observe
+
+x-demo: &demo
+  build:
+    context: ..
+    dockerfile: observability/demo.Dockerfile
+  restart: unless-stopped
+
+services:
+  # --- Option A: the app exposes /metrics, Prometheus scrapes it ----------
+  kerniq-demo-prometheus:
+    <<: *demo
+    profiles: [prometheus]
+    environment:
+      PORT: "3000"
+      KERNIQ_METRICS: prometheus
+      KERNIQ_METRICS_PORT: "9464"   # separate metrics listener
+      KERNIQ_LOG_FORMAT: json
+      KERNIQ_ENVIRONMENT: local
+    ports:
+      - "3000:3000"
+
+  # --- Option B: the app pushes OTLP to the Collector ----------------------
+  kerniq-demo-otlp:
+    <<: *demo
+    profiles: [otlp]
+    environment:
+      PORT: "3000"
+      KERNIQ_METRICS: otlp
+      KERNIQ_OTLP: "true"
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      KERNIQ_TRACE_RATIO: "1.0"
+      KERNIQ_LOG_FORMAT: json
+      KERNIQ_ENVIRONMENT: local
+    ports:
+      - "3000:3000"
+    depends_on:
+      - otel-collector
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.130.0
+    profiles: [otlp]
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otel-collector/config.yaml:/etc/otelcol/config.yaml:ro
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "13133:13133" # health check
+    depends_on:
+      - tempo
+      - loki
+
+  tempo:
+    image: grafana/tempo:2.8.1
+    profiles: [otlp]
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./tempo/tempo.yaml:/etc/tempo.yaml:ro
+
+  loki:
+    image: grafana/loki:3.5.3
+    profiles: [otlp]
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+
+  # --- Shared ----------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    profiles: [prometheus, otlp]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=2d
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:12.1.0
+    profiles: [prometheus, otlp]
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+
+  loadgen:
+    image: curlimages/curl:8.15.0
+    profiles: [prometheus, otlp]
+    entrypoint: ["/bin/sh", "/loadgen.sh"]
+    environment:
+      TARGETS: "kerniq-demo-prometheus:3000 kerniq-demo-otlp:3000"
+    volumes:
+      - ./scripts/loadgen.sh:/loadgen.sh:ro

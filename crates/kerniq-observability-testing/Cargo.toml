@@ -1,0 +1,39 @@
+[package]
+name = "kerniq-observability-testing"
+description = "Test support for Kerniq observability: in-memory metric, span and log exporters with assertions."
+readme = "README.md"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation = "https://docs.rs/kerniq-observability-testing"
+authors.workspace = true
+keywords = ["observability", "opentelemetry", "testing", "metrics", "kerniq"]
+categories = ["development-tools::testing"]
+
+[dependencies]
+kerniq-observability = { workspace = true, features = ["metrics", "logs", "tracing"] }
+kerniq-telemetry.workspace = true
+opentelemetry = { workspace = true, features = ["metrics", "trace", "logs"] }
+opentelemetry_sdk = { workspace = true, features = ["metrics", "trace", "logs", "testing"] }
+tracing.workspace = true
+tracing-subscriber = { workspace = true, features = ["registry", "std"] }
+
+[dev-dependencies]
+kerniq-observability = { workspace = true, features = ["metrics", "logs", "tracing", "otlp", "runtime"] }
+axum = { workspace = true }
+bytes.workspace = true
+opentelemetry-proto = { version = "0.33.1", default-features = false, features = ["gen-tonic-messages", "trace", "logs", "metrics"] }
+prost = "0.14"
+serde_json.workspace = true
+tracing-subscriber = { workspace = true, features = ["registry", "std", "fmt", "json"] }
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread", "net", "time", "sync"] }
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints]
+workspace = true

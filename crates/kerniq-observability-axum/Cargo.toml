@@ -1,0 +1,52 @@
+[package]
+name = "kerniq-observability-axum"
+description = "Tower/Axum HTTP instrumentation for Kerniq Server: OpenTelemetry HTTP metrics, W3C trace context and streaming-aware request tracing."
+readme = "README.md"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation = "https://docs.rs/kerniq-observability-axum"
+authors.workspace = true
+keywords = ["observability", "opentelemetry", "tower", "axum", "metrics"]
+categories = ["development-tools::debugging", "web-programming::http-server"]
+
+[features]
+default = ["metrics", "tracing"]
+# HTTP server metrics (`http.server.*`).
+metrics = []
+# A `tracing` span per request, bridged to OpenTelemetry with W3C context
+# propagation (`tracing-opentelemetry`).
+tracing = ["dep:tracing-opentelemetry", "opentelemetry/trace"]
+
+[dependencies]
+kerniq-routing.workspace = true
+kerniq-telemetry.workspace = true
+axum = { workspace = true, features = ["matched-path"] }
+bytes.workspace = true
+http.workspace = true
+http-body.workspace = true
+opentelemetry = { workspace = true, features = ["metrics"] }
+pin-project-lite.workspace = true
+tower.workspace = true
+tracing.workspace = true
+tracing-opentelemetry = { workspace = true, optional = true }
+
+[dev-dependencies]
+futures-util = { workspace = true, features = ["std"] }
+http-body-util.workspace = true
+opentelemetry_sdk = { workspace = true, features = ["metrics", "trace", "testing"] }
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread", "time", "sync"] }
+tower = { workspace = true, features = ["util"] }
+tracing-subscriber = { workspace = true, features = ["registry", "std"] }
+tracing-opentelemetry.workspace = true
+axum = { workspace = true, features = ["matched-path"] }
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints]
+workspace = true

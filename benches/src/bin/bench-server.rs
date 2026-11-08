@@ -2,6 +2,8 @@
 //!
 //! ```sh
 //! bench-server <scenario> <kerniq|axum> [address] [worker-threads]
+//! bench-server obs <observability-scenario> [address] [worker-threads]
+//! bench-server sink [address]
 //! ```
 //!
 //! `kerniq` serves through `App::run` (Kerniq's accept loop, graceful
@@ -23,6 +25,12 @@ fn main() {
         .cloned()
         .unwrap_or_else(|| "127.0.0.1:8090".into());
     let workers: usize = args.get(4).and_then(|w| w.parse().ok()).unwrap_or(4);
+
+    match scenario {
+        Some("obs") => return observed(framework.unwrap_or("baseline"), &address, workers),
+        Some("sink") => return sink(framework.unwrap_or("127.0.0.1:4399")),
+        _ => {}
+    }
 
     let Some((_, kerniq, axum, _)) = SCENARIOS.iter().find(|s| Some(s.0) == scenario) else {
         let names: Vec<_> = SCENARIOS.iter().map(|s| s.0).collect();
@@ -64,5 +72,55 @@ fn main() {
                 std::process::exit(2);
             }
         }
+    });
+}
+
+fn runtime(workers: usize) -> tokio::runtime::Runtime {
+    tokio::runtime::Builder::new_multi_thread()
+        .worker_threads(workers)
+        .enable_all()
+        .build()
+        .expect("runtime")
+}
+
+/// Serves `kerniq_benches::observability::app` with one observability
+/// configuration. Prints export statistics to stderr on exit.
+fn observed(scenario: &str, address: &str, workers: usize) {
+    runtime(workers).block_on(async move {
+        let observability = kerniq_benches::observability::build(scenario, true).await;
+        let handle = observability.clone();
+        kerniq_benches::observability::app(observability)
+            .run(address)
+            .await
+            .expect("kerniq server");
+        if let Some(o) = handle {
+            let s = o.stats();
+            eprintln!(
+                "{{\"stats\":{{\"traces_offered\":{},\"traces_exported\":{},\"traces_unexported\":{},\"logs_offered\":{},\"logs_exported\":{},\"logs_unexported\":{},\"export_failures\":{},\"console_dropped\":{}}}}}",
+                s.traces.offered,
+                s.traces.exported,
+                s.traces.unexported,
+                s.logs.offered,
+                s.logs.exported,
+                s.logs.unexported,
+                s.traces.export_failures + s.logs.export_failures + s.metrics.export_failures,
+                s.console_lines_dropped
+            );
+        }
+    });
+}
+
+/// An OTLP/HTTP sink for the OTLP scenarios (runs in its own process).
+fn sink(address: &str) {
+    runtime(2).block_on(async move {
+        let listener = tokio::net::TcpListener::bind(address)
+            .await
+            .expect("bind sink");
+        axum::serve(listener, kerniq_benches::observability::sink_router())
+            .with_graceful_shutdown(async {
+                let _ = tokio::signal::ctrl_c().await;
+            })
+            .await
+            .expect("sink");
     });
 }

@@ -1,0 +1,13 @@
+[package]
+name = "example-observability-minimal"
+version = "0.0.0"
+edition.workspace = true
+publish = false
+
+[dependencies]
+kerniq-server = { path = "../../crates/kerniq-server", features = ["observability-metrics", "observability-logs", "prometheus"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tracing = "0.1"
+
+[lints]
+workspace = true

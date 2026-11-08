@@ -10,7 +10,7 @@
 //! Hyper do that work.
 
 #![warn(missing_docs)]
-#![cfg_attr(docsrs, feature(doc_auto_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 pub mod runtime;
 pub mod server;

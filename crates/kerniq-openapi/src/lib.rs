@@ -30,7 +30,7 @@
 //! `App::mount_axum`.
 
 #![warn(missing_docs)]
-#![cfg_attr(docsrs, feature(doc_auto_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 use axum::response::{Html, IntoResponse};
 use bytes::Bytes;

@@ -1137,14 +1137,14 @@ dependencies = [
 
 [[package]]
 name = "kerniq-cli"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "clap",
 ]
 
 [[package]]
 name = "kerniq-core"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "axum-core",
  "http",
@@ -1159,7 +1159,7 @@ dependencies = [
 
 [[package]]
 name = "kerniq-http"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "axum",
  "bytes",
@@ -1175,16 +1175,16 @@ dependencies = [
 
 [[package]]
 name = "kerniq-macros"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.119",
+ "syn 3.0.9",
 ]
 
 [[package]]
 name = "kerniq-middleware"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "axum",
  "http",
@@ -1201,7 +1201,7 @@ dependencies = [
 
 [[package]]
 name = "kerniq-openapi"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "axum",
  "bytes",
@@ -1217,7 +1217,7 @@ dependencies = [
 
 [[package]]
 name = "kerniq-routing"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "axum",
  "http",
@@ -1228,7 +1228,7 @@ dependencies = [
 
 [[package]]
 name = "kerniq-runtime"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "axum",
  "bytes",
@@ -1245,7 +1245,7 @@ dependencies = [
 
 [[package]]
 name = "kerniq-server"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "axum",
  "bytes",

@@ -1,12 +1,14 @@
 [package]
 name = "kerniq-routing"
 description = "Routers, route groups and middleware composition for Kerniq Server, built on Axum."
+readme = "README.md"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 homepage.workspace = true
+documentation = "https://docs.rs/kerniq-routing"
 authors.workspace = true
 keywords.workspace = true
 categories.workspace = true
@@ -20,6 +22,10 @@ tower = { workspace = true }
 http-body-util.workspace = true
 tokio = { workspace = true, features = ["macros", "rt"] }
 tower = { workspace = true, features = ["util"] }
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 
 [lints]
 workspace = true

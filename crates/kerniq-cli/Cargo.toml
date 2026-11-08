@@ -9,6 +9,7 @@ repository.workspace = true
 homepage.workspace = true
 authors.workspace = true
 keywords.workspace = true
+readme = "README.md"
 categories = ["command-line-utilities", "development-tools", "web-programming::http-server"]
 
 # The CLI is independent of the framework: it generates projects that depend

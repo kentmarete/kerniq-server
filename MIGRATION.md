@@ -2,7 +2,7 @@
 
 This guide covers what to change in your code when you upgrade Kerniq Server
 across a release with breaking changes. For the full list of changes in every
-release, see [CHANGELOG.md](CHANGELOG.md).
+release, see the [changelog](https://kerniq-server.com/changelog.html).
 
 ## Versioning
 
@@ -32,6 +32,10 @@ covered by this guide.
    cannot catch them.
 
 ## Releases
+
+### 0.1.2
+
+No breaking changes. Update with `cargo update -p kerniq-server`.
 
 ### 0.1.0
 

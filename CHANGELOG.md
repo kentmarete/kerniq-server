@@ -6,6 +6,47 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-11-08
+
+All crates are released together at 0.1.3. The five observability crates
+are new on crates.io; the other crates are unchanged apart from the version.
+
+### Added
+
+- **Kerniq Observe**: vendor-neutral observability built on OpenTelemetry
+  0.33, `tracing` and Prometheus. New crates `kerniq-observability`
+  (builder, providers, OTLP, logging, lifecycle), `kerniq-observability-axum`
+  (HTTP instrumentation), `kerniq-observability-prometheus` (scrape
+  endpoint), `kerniq-telemetry` (conventions, bounded labels, AI inference
+  instruments) and `kerniq-observability-testing` (in-memory exporters and
+  assertions).
+- `App::observability` behind the new `kerniq-server` features
+  `observability`, `observability-metrics`, `observability-logs`,
+  `observability-tracing`, `otlp`, `otlp-tls`, `prometheus`,
+  `runtime-metrics` and `full-observability`. None is enabled by default
+  and `full` does not include them.
+- HTTP server metrics following the OpenTelemetry semantic conventions
+  (`http.server.request.duration`, `http.server.active_requests`, request and
+  response body sizes) plus `kerniq.http.server.time_to_first_byte`, with
+  streaming-aware measurement and `error.type` for aborted streams.
+- Prometheus scraping (Option A) and OTLP export of metrics, logs and traces
+  (Option B), JSON/pretty/compact console logs with trace correlation, W3C
+  trace-context and baggage propagation, runtime and process metrics,
+  export-pipeline statistics and bounded shutdown.
+- `observability/`: Prometheus, OpenTelemetry Collector (default,
+  multi-exporter and Datadog), Tempo and Grafana provisioning, four
+  dashboards and a Docker Compose environment for both architectures.
+- `examples/observability-minimal` and `examples/observability-demo`.
+- Guides in `docs/observability/`.
+- `benches/run-observability.sh` and observability scenarios in
+  `bench-server` and `alloc-count`.
+
+### Fixed
+
+- `loadgen` sent a request before the HTTP/1 connection was ready for it,
+  occasionally failing requests with "connection was not ready" when
+  response timing varied; it now awaits readiness.
+
 ## [0.1.2] - 2026-11-08
 
 All crates are released together at 0.1.2. `kerniq-server` 0.1.1 was
@@ -88,6 +129,7 @@ First release.
 - Twelve runnable examples, guides in `docs/`, and benchmarks against native
   Axum (criterion, allocation counts, real-HTTP load test).
 
-[Unreleased]: https://github.com/kerniqq/kerniq-server/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/kerniqq/kerniq-server/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/kerniqq/kerniq-server/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/kerniqq/kerniq-server/compare/v0.1.0...v0.1.2
 [0.1.0]: https://github.com/kerniqq/kerniq-server/releases/tag/v0.1.0

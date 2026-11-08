@@ -259,6 +259,7 @@ error mapping, health checks, pool sizing and testing.
 | Lifecycle | Graceful shutdown (SIGINT/SIGTERM), bounded drain, connection limits, background tasks, `run` / `run_blocking` |
 | Configuration | Builder, `KERNIQ_*` environment variables, TOML files |
 | Optional | WebSockets, OpenAPI + Swagger UI (Utoipa), validation (`validator`), `#[authorize]` role/permission checks |
+| Observability | OpenTelemetry metrics, logs and traces, Prometheus scraping, OTLP to any Collector or vendor, Grafana dashboards ([guide](docs/observability/overview.md)) |
 | Interop | `into_axum_router`, `mount_axum`, native Axum handlers, extractors and layers |
 | CLI | `kerniq new` (basic, rest, modular, production), `dev` (auto-restart), `build`, `check`, `test` |
 
@@ -346,6 +347,7 @@ reference is on **[docs.rs](https://docs.rs/kerniq-server)**.
 * [Databases and message brokers](https://kerniq-server.com/integrations.html) (PostgreSQL, MySQL,
   SQLite, Redis, MongoDB, Kafka, RabbitMQ)
 * [OpenAPI](https://kerniq-server.com/openapi.html)
+* [Observability](docs/observability/overview.md) — metrics, logs, traces, Prometheus, OTLP, Grafana
 * [Performance and benchmarking](https://kerniq-server.com/performance.html)
 * [Architecture](https://kerniq-server.com/architecture.html)
 * [Migration guide](https://kerniq-server.com/migration.html) — upgrading across breaking releases
@@ -355,7 +357,8 @@ reference is on **[docs.rs](https://docs.rs/kerniq-server)**.
 Runnable examples live in [`examples/`](https://github.com/kerniqq/kerniq-server/tree/main/examples): `hello-world`,
 `rest-api`, `shared-state`, `route-groups`, `middleware`,
 `custom-middleware`, `error-handling`, `axum-integration`, `websocket`,
-`graceful-shutdown`, `openapi`, `validation`, `run-blocking` and `task-api`
+`graceful-shutdown`, `openapi`, `validation`, `run-blocking`,
+`observability-minimal`, `observability-demo` and `task-api`
 (the finished tutorial project):
 
 ```sh

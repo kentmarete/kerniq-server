@@ -44,6 +44,13 @@ async fn connection(
         if start >= deadline {
             break;
         }
+        // Hyper's HTTP/1 client accepts the next request only once the
+        // previous response has been fully processed.
+        if sender.ready().await.is_err() {
+            stats.errors += 1;
+            report_error("connection closed");
+            break;
+        }
         let request = http::Request::get(&path)
             .header("host", &host)
             .body(Empty::<Bytes>::new())
@@ -58,17 +65,30 @@ async fn connection(
                             stats.bytes += body.len() as u64;
                             stats.latencies_us.push(start.elapsed().as_micros() as u32);
                         }
-                        _ => stats.errors += 1,
+                        (ok, body) => {
+                            stats.errors += 1;
+                            report_error(&format!("status ok={ok}, body={:?}", body.err()));
+                        }
                     }
                 }
             }
-            Err(_) => {
+            Err(err) => {
                 stats.errors += 1;
+                report_error(&format!("request failed: {err:?}"));
                 break;
             }
         }
     }
     stats
+}
+
+/// Prints the first few error causes to stderr (stdout carries the result).
+fn report_error(message: &str) {
+    use std::sync::atomic::{AtomicU32, Ordering};
+    static REPORTED: AtomicU32 = AtomicU32::new(0);
+    if REPORTED.fetch_add(1, Ordering::Relaxed) < 5 {
+        eprintln!("loadgen error: {message}");
+    }
 }
 
 fn percentile(sorted: &[u32], p: f64) -> f64 {

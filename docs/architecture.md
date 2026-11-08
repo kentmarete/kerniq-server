@@ -230,3 +230,10 @@ document (serialized once) and a Swagger UI page that loads
 `swagger-ui-dist` from a CDN, which avoids `utoipa-swagger-ui`'s build-time
 asset download. Air-gapped deployments can mount `utoipa-swagger-ui`
 through `mount_axum`.
+
+### 13. Observability
+
+Kerniq Observe (`kerniq-observability` and its satellite crates) is an
+optional layer over OpenTelemetry, `tracing` and Prometheus, reached through
+`App::observability` behind the `observability*` features. It has its own
+architecture document: [docs/observability/architecture.md](observability/architecture.md).

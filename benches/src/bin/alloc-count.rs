@@ -79,4 +79,24 @@ fn main() {
         let (aa, ab) = measure(&rt, &axum(), path);
         println!("| {name} | {ka:.1} | {aa:.1} | {kb:.0} | {ab:.0} |");
     }
+
+    // Observability overhead: the same app, each configuration, both
+    // routes. Allocations on export threads are included (they are
+    // amortized per request).
+    println!();
+    println!(
+        "| Observability | /users/{{id}} allocs/req | bytes/req | /stream allocs/req | bytes/req |"
+    );
+    println!("|---|---:|---:|---:|---:|");
+    for scenario in kerniq_benches::observability::in_process::SCENARIOS {
+        let (router, guard, observability) =
+            rt.block_on(kerniq_benches::observability::in_process::build(scenario));
+        let (ua, ub) = measure(&rt, &router, "/users/42");
+        let (sa, sb) = measure(&rt, &router, "/stream");
+        println!("| {scenario} | {ua:.1} | {ub:.0} | {sa:.1} | {sb:.0} |");
+        drop(guard);
+        if let Some(o) = observability {
+            rt.block_on(o.shutdown());
+        }
+    }
 }

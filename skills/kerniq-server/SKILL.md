@@ -1,6 +1,6 @@
 ---
 name: kerniq-server
-description: Build HTTP/JSON services and REST APIs in Rust with the Kerniq Server framework (crate `kerniq-server`, CLI `kerniq`). Use when creating a new Kerniq service, adding routes, handlers, extractors, shared state, middleware, authentication or role/permission authorization, configuration, background tasks, databases or message brokers, OpenAPI, or tests to a project that depends on `kerniq-server` or uses `kerniq_server::prelude`.
+description: Build HTTP/JSON services and REST APIs in Rust with the Kerniq Server framework (crate `kerniq-server`, CLI `kerniq`). Use when creating a new Kerniq service, adding routes, handlers, extractors, shared state, middleware, authentication or role/permission authorization, configuration, background tasks, databases or message brokers, OpenAPI, observability (metrics, structured logs, distributed tracing, Prometheus, OpenTelemetry/OTLP), or tests to a project that depends on `kerniq-server` or uses `kerniq_server::prelude`.
 ---
 
 # Building services with Kerniq Server
@@ -58,7 +58,10 @@ tower = { version = "0.5", features = ["util"] }
 | `websocket` | | `kerniq_server::extract::ws` |
 | `config-file` | | `ServerConfig::from_file` (TOML) |
 | `macros` | | `#[authorize(..)]` |
-| `full` | | everything |
+| `full` | | everything above (not observability) |
+| `observability-metrics` / `-logs` / `-tracing` | | Kerniq Observe signals (section 12) |
+| `prometheus` / `otlp` / `otlp-tls` / `runtime-metrics` | | exporters and runtime metrics |
+| `full-observability` | | all observability features except `otlp-tls` |
 
 Enable only what the service uses.
 
@@ -195,6 +198,8 @@ app.middleware(RequestId::new())
     .middleware(RateLimit::per_second(50))
 ```
 
+With Kerniq Observe (section 12), drop `Logger` and `Metrics`: `App::observability`
+already logs, measures and traces every request as the outermost layer.
 Also available: `BodyLimit`, `ConcurrencyLimit`. Router-level
 `.middleware(..)` scopes to that router's routes only. Any Tower layer works
 via `.layer(..)`.
@@ -316,7 +321,122 @@ conflict, and 401/403 for protected routes.
 - **Axum interop:** `.mount_axum(path, axum_router)` to embed existing
   Axum routers; any Axum extractor or Tower layer works unchanged.
 
-## 12. Before finishing
+## 12. Observability (Kerniq Observe)
+
+Metrics, structured logs and traces through one builder, on OpenTelemetry,
+`tracing` and Prometheus. Enable `features = ["full-observability"]` (or
+only the signals you need) and import
+`use kerniq_server::observability::prelude::*;`.
+
+```rust
+let observability = Observability::builder()
+    .service_name("payment-api")          // else OTEL_SERVICE_NAME
+    .service_version(env!("CARGO_PKG_VERSION"))
+    .environment("production")
+    .metrics(MetricsConfig::prometheus()) // GET /metrics
+    .logs(LogsConfig::json())             // JSON lines on stdout
+    .traces(TracesConfig::otlp().sampling_ratio(0.10))
+    .build()
+    .await?;                              // inside the Tokio runtime
+
+App::new()
+    .observability(observability)         // HTTP layer, outermost
+    // ...routes...
+    .run(address)
+    .await                                // flushes telemetry on shutdown
+```
+
+Each request then gets `http.server.request.duration` (by route template),
+active requests, body sizes, time to first byte, a span `{METHOD} {route}`
+continuing the caller's W3C `traceparent`, and `trace_id` on every log line
+inside it. Pass a clone of `observability` into `AppState` if handlers need
+`meter(..)` or `propagator()`.
+
+**Choosing an architecture.**
+
+| Setup | Config |
+|---|---|
+| Option A: Prometheus scrapes the app | `MetricsConfig::prometheus()`; in production `.prometheus_listener(addr)` for a separate, network-restricted port |
+| Option B (recommended for production): OTLP to a Collector | `MetricsConfig::otlp()`, `LogsConfig::otlp()` or `json().with_otlp(..)`, `TracesConfig::otlp()`; endpoint via `.endpoint(..)` or `OTEL_EXPORTER_OTLP_ENDPOINT` (default `http://localhost:4317`) |
+
+Both can run together and produce the same metric names. Keep vendor
+credentials and fan-out in the Collector, not in the app.
+
+**Logs.** Use `tracing` macros with structured fields, never interpolated
+strings: `info!(amount_minor, currency, "payment received")`.
+`LogsConfig::json()` for production, `pretty()`/`compact()` for development;
+`.filter("info,my_service=debug")` (default `RUST_LOG`, else `info`),
+`.otlp_filter("warn")` to export less than you print. Use
+`#[instrument(skip(password))]`/`skip_all`; never log bodies, tokens,
+authorization headers, card numbers or secrets. `build()` installs the
+global subscriber and fails with `SubscriberAlreadySet` if one exists — do
+not also call `tracing_subscriber::fmt::init()`; to compose, use
+`.install_subscriber(false)` and add `observability.tracing_layer()`.
+
+**Custom metrics.** Use the OpenTelemetry `Meter` API directly; it is a
+no-op when metrics are disabled.
+
+```rust
+use kerniq_server::observability::{BoundedLabel, KeyValue};
+
+static CURRENCY: BoundedLabel = BoundedLabel::new(&["USD", "EUR", "KES"], "other");
+
+let meter = observability.meter("payments");
+let payments = meter.u64_counter("payments.processed").with_unit("{payment}").build();
+let amount = meter.u64_histogram("payment.amount").with_unit("{minor_unit}").build();
+// store `payments` / `amount` in AppState; per request:
+payments.add(1, &[KeyValue::new("currency", CURRENCY.get(&input.currency)),
+                  KeyValue::new("outcome", "accepted")]);
+```
+
+- Create instruments **once** at startup and keep them in state.
+- Attributes must be **bounded**: route templates and enums only. Never
+  user/account/request ids, emails, raw URLs, error messages or prompts —
+  put those on spans or log fields. Map untrusted input through
+  `BoundedLabel`. Record amounts as histogram values, not labels.
+- Prefer semantic-convention names (`db.client.operation.duration`,
+  `http.client.request.duration`, `messaging.*`).
+- Read-at-collection values (queue depth, pool size): observable gauges
+  with `.with_callback(..)`. AI/streaming generation:
+  `kerniq_server::observability::telemetry::inference::InferenceMetrics`.
+
+**Traces.** Spans are `tracing` spans. Add `#[instrument]` at I/O
+boundaries (DB, outbound HTTP, queues, model calls), not on trivial
+functions. Record failures with `tracing::error!(error = %err, "...")`.
+For outbound calls, propagate context:
+`inject_current_context(observability.propagator().as_ref(), request.headers_mut())`
+(`kerniq_server::observability::propagation`). Sample at high volume
+(`sampling_ratio(0.01..0.1)`, parent-based by default); never sample
+metrics.
+
+**Testing telemetry.** Add `kerniq-observability-testing` as a
+dev-dependency; it wires a real `Observability` to in-memory exporters.
+
+```rust
+#[tokio::test]
+async fn records_payment_metrics() {
+    let telemetry = kerniq_observability_testing::TestTelemetry::new().await;
+    let router = app_with(telemetry.observability().clone()).into_axum_router();
+    // ...send requests with `oneshot`...
+    let metrics = telemetry.metrics();
+    assert_eq!(metrics.total("payments.processed", &[("outcome", "accepted")]), 1.0);
+    assert!(telemetry.logs().iter().any(|l| l.body == "payment accepted"));
+    let _span = telemetry.span("POST /payments");
+    telemetry.assert_bounded_metric_labels(); // fails on id/email-like keys
+}
+```
+
+Make the app constructor accept the `Observability` so tests can inject
+`TestTelemetry`'s instance (or `Observability::disabled()`).
+
+**Production.** Set `service_name`, `service_version`, `environment`; let
+the platform add `k8s.*`/`cloud.*` via `OTEL_RESOURCE_ATTRIBUTES`. Give the
+Collector a `memory_limiter`. Set the termination grace period above the
+server drain timeout plus the observability `shutdown_timeout` (5 s). Queues
+are bounded and drop (counted) when full: watch
+`kerniq_telemetry_items_total` / `observability.stats()`.
+
+## 13. Before finishing
 
 Run `kerniq check` (fmt, check, clippy `-D warnings`) and `kerniq test`, or
 the equivalent `cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test`.
@@ -331,10 +451,19 @@ Then verify:
 - [ ] Config comes from env/file; no hard-coded secrets or addresses.
 - [ ] Background tasks stop on shutdown; connections close after `run`.
 - [ ] Tests exercise the router via `into_axum_router()` + `oneshot`.
+- [ ] If observability is enabled: `service_name` set, metric attributes
+      bounded (no ids, emails, raw paths), instruments created once, no
+      secrets in log fields or span attributes, `/metrics` not publicly
+      exposed, and no second `tracing` subscriber installed.
 
 ## Reference
 
 The Kerniq repository's `docs/` folder has the full guides: `getting-started`,
 `routing`, `handlers`, `extractors`, `state-management`, `middleware`,
 `authorization`, `configuration`, `runtime`, `integrations`, `openapi`,
-`websockets`, `axum-interop`, `performance`, `architecture`.
+`websockets`, `axum-interop`, `performance`, `architecture`. Observability
+guides are in `docs/observability/`: `overview`, `configuration`, `logging`,
+`tracing`, `custom-metrics`, `prometheus`, `otlp`, `grafana`,
+`vendor-integrations`, `performance`, `troubleshooting`. Runnable examples:
+`examples/observability-minimal` and `examples/observability-demo`
+(local stack: `observability/docker-compose.yml`).

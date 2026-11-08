@@ -28,11 +28,13 @@ The project depends on `kerniq-server` from crates.io. To try unreleased
 changes instead, add `--kerniq-path /path/to/kerniq-server` or
 `--kerniq-git <url>` to `kerniq new`.
 
-The generated `Cargo.toml` already has what this tutorial needs:
+The generated `Cargo.toml` already has what this tutorial needs. The CLI
+writes the latest Kerniq release; in Cargo, `"0.1.2"` means 0.1.2 or any
+later 0.1.x:
 
 ```toml
 [dependencies]
-kerniq-server = { version = "0.1" }
+kerniq-server = { version = "0.1.2" }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "time"] }
 

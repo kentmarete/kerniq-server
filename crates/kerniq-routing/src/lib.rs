@@ -11,7 +11,7 @@
 //! * [`methods`] — Axum's method-router constructors for advanced routes.
 
 #![warn(missing_docs)]
-#![cfg_attr(docsrs, feature(doc_auto_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 pub mod middleware;
 pub mod path;

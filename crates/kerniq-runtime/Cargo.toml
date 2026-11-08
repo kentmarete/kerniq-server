@@ -1,12 +1,14 @@
 [package]
 name = "kerniq-runtime"
 description = "Tokio server lifecycle for Kerniq Server: accept loop, graceful shutdown, background tasks."
+readme = "README.md"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license.workspace = true
 repository.workspace = true
 homepage.workspace = true
+documentation = "https://docs.rs/kerniq-runtime"
 authors.workspace = true
 keywords.workspace = true
 categories.workspace = true
@@ -27,6 +29,10 @@ tokio = { workspace = true, features = ["io-util"] }
 hyper-util = { workspace = true, features = ["client-legacy"] }
 http-body-util.workspace = true
 bytes.workspace = true
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
 
 [lints]
 workspace = true

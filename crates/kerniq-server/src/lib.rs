@@ -53,7 +53,7 @@
 //! | `full` | | all of the above |
 
 #![warn(missing_docs)]
-#![cfg_attr(docsrs, feature(doc_auto_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 mod builder;
 pub mod prelude;

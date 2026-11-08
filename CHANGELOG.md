@@ -6,6 +6,12 @@ adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-08
+
+All crates are released together at 0.1.2. `kerniq-server` 0.1.1 was
+published on its own, against 0.1.0 of the internal crates; 0.1.2 brings
+every crate back to the same version.
+
 ### Added
 
 - Opt-in authorization: `Authorities` (roles and permissions of an
@@ -32,6 +38,23 @@ adheres to [Semantic Versioning](https://semver.org/).
 - `MIGRATION.md`, a guide to upgrading across breaking releases.
 - `#![warn(missing_docs)]` in every library crate, and docs for the
   variants of `RequireFuture` and `RateLimitFuture`.
+- A README for every published crate, shown on crates.io and docs.rs.
+
+### Changed
+
+- The homepage is now <https://kerniq-server.com/>, which hosts the guides.
+  README links point there (and to GitHub for repository files), so they
+  work on crates.io and docs.rs.
+- `kerniq-macros` uses `syn` 3.
+- Raised the minimum versions of dependencies to their current releases.
+- Internal crates depend on each other at `0.1.2`.
+
+### Fixed
+
+- docs.rs builds. `#![feature(doc_auto_cfg)]` was removed from nightly
+  Rust (merged into `doc_cfg`), which failed every docs.rs build; the crates
+  now use `doc_cfg`. Every library crate builds its docs with all features
+  enabled and shows which feature each item needs.
 
 ## [0.1.0] - 2026-11-07
 
@@ -65,5 +88,6 @@ First release.
 - Twelve runnable examples, guides in `docs/`, and benchmarks against native
   Axum (criterion, allocation counts, real-HTTP load test).
 
-[Unreleased]: https://github.com/kerniqq/kerniq-server/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/kerniqq/kerniq-server/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/kerniqq/kerniq-server/compare/v0.1.0...v0.1.2
 [0.1.0]: https://github.com/kerniqq/kerniq-server/releases/tag/v0.1.0

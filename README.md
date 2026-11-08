@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" alt="Kerniq Server logo" width="600">
+  <img src="https://kerniq-server.com/assets/logo.png" alt="Kerniq Server logo" width="600">
 </p>
 
 # Kerniq Server
@@ -8,6 +8,10 @@
 top of Axum, Tower, Hyper and Tokio.**
 
 > Simple by default. Powerful when needed. Extensible by design.
+
+[![crates.io](https://img.shields.io/crates/v/kerniq-server.svg)](https://crates.io/crates/kerniq-server)
+[![docs.rs](https://img.shields.io/docsrs/kerniq-server)](https://docs.rs/kerniq-server)
+[![Guides](https://img.shields.io/badge/guides-kerniq--server.com-blue)](https://kerniq-server.com/)
 
 ```rust,no_run
 use kerniq_server::prelude::*;
@@ -49,9 +53,8 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 serde = { version = "1", features = ["derive"] }
 ```
 
-> Kerniq 0.1.0 is not yet published to crates.io. Until it is, depend on a
-> checkout: `kerniq-server = { path = "../kerniq-server/crates/kerniq-server" }`,
-> or use `kerniq new --kerniq-path <checkout>`.
+To track unreleased changes, depend on the repository instead:
+`kerniq-server = { git = "https://github.com/kerniqq/kerniq-server" }`.
 
 ## A taste of the API
 
@@ -190,8 +193,8 @@ async fn health() -> StatusCode {
 
 Use `Error` for failures so clients always get the JSON envelope, and status
 tuples for everything else. See [Handlers, responses and
-errors](docs/handlers.md) for the full guide, and
-[`examples/error-handling`](examples/error-handling) for a runnable version.
+errors](https://kerniq-server.com/handlers.html) for the full guide, and
+[`examples/error-handling`](https://github.com/kerniqq/kerniq-server/tree/main/examples/error-handling) for a runnable version.
 
 ## Databases and message brokers
 
@@ -238,7 +241,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-[Databases and message brokers](docs/integrations.md) has complete examples
+[Databases and message brokers](https://kerniq-server.com/integrations.html) has complete examples
 for PostgreSQL/MySQL/SQLite (`sqlx`), Redis (commands and pub/sub), MongoDB,
 Kafka (producer and consumer) and RabbitMQ (publisher and consumer), plus
 error mapping, health checks, pool sizing and testing.
@@ -267,8 +270,8 @@ full one.
 ## CLI
 
 ```sh
-cargo install --path crates/kerniq-cli
-kerniq new customer-api --template production --kerniq-path .
+cargo install kerniq-cli
+kerniq new customer-api --template production
 cd customer-api
 kerniq dev      # run, rebuild and restart on change
 kerniq check    # fmt --check, check, clippy -D warnings
@@ -280,7 +283,7 @@ immediately after generation.
 
 ## Using Kerniq with Claude Code
 
-[`skills/kerniq-server/SKILL.md`](skills/kerniq-server/SKILL.md) is a
+[`skills/kerniq-server/SKILL.md`](https://github.com/kerniqq/kerniq-server/blob/main/skills/kerniq-server/SKILL.md) is a
 [Claude Code skill](https://docs.claude.com/en/docs/claude-code/skills) that
 teaches Claude how to build services with Kerniq: project templates and
 layout, routing, errors, state, middleware order, authentication and
@@ -308,7 +311,7 @@ kerniq-server  ── App, prelude, re-exports (the crate you depend on)
 kerniq-cli             Independent scaffolding tool
 ```
 
-See [docs/architecture.md](docs/architecture.md) for the design decisions,
+See [docs/architecture.md](https://kerniq-server.com/architecture.html) for the design decisions,
 including where the specification was adapted to Rust's type system.
 
 ## Performance
@@ -320,31 +323,34 @@ middleware stack allocated less than the equivalent tower-http stack. Over
 real HTTP it was within a few percent of `axum::serve`. The one measurable
 default cost, slow-header protection (about 3.5% on a trivial endpoint), is
 documented and can be switched off. Methodology, raw results and limitations
-are in [docs/performance.md](docs/performance.md). Run
+are in [docs/performance.md](https://kerniq-server.com/performance.html). Run
 `benches/run-http.sh` on your own hardware.
 
 ## Documentation
 
-* [Getting started](docs/getting-started.md) — installation, first app, CLI
-* [Routing](docs/routing.md)
-* [Handlers, responses and errors](docs/handlers.md)
-* [Extractors](docs/extractors.md) (including validation)
-* [Shared state](docs/state-management.md)
-* [Middleware](docs/middleware.md) (including custom middleware)
-* [Authorization](docs/authorization.md) (roles and permissions)
-* [Axum and Tower interoperability](docs/axum-interop.md)
-* [Runtime, lifecycle and graceful shutdown](docs/runtime.md)
-* [WebSockets](docs/websockets.md)
-* [Configuration](docs/configuration.md)
-* [Databases and message brokers](docs/integrations.md) (PostgreSQL, MySQL,
-  SQLite, Redis, MongoDB, Kafka, RabbitMQ)
-* [OpenAPI](docs/openapi.md)
-* [Performance and benchmarking](docs/performance.md)
-* [Architecture](docs/architecture.md)
-* [Migration guide](MIGRATION.md) — upgrading across breaking releases
-* [Changelog](CHANGELOG.md)
+The guides are hosted at **[kerniq-server.com](https://kerniq-server.com/)** and the API
+reference is on **[docs.rs](https://docs.rs/kerniq-server)**.
 
-Runnable examples live in [`examples/`](examples): `hello-world`,
+* [Getting started](https://kerniq-server.com/getting-started.html) — installation, first app, CLI
+* [Routing](https://kerniq-server.com/routing.html)
+* [Handlers, responses and errors](https://kerniq-server.com/handlers.html)
+* [Extractors](https://kerniq-server.com/extractors.html) (including validation)
+* [Shared state](https://kerniq-server.com/state-management.html)
+* [Middleware](https://kerniq-server.com/middleware.html) (including custom middleware)
+* [Authorization](https://kerniq-server.com/authorization.html) (roles and permissions)
+* [Axum and Tower interoperability](https://kerniq-server.com/axum-interop.html)
+* [Runtime, lifecycle and graceful shutdown](https://kerniq-server.com/runtime.html)
+* [WebSockets](https://kerniq-server.com/websockets.html)
+* [Configuration](https://kerniq-server.com/configuration.html)
+* [Databases and message brokers](https://kerniq-server.com/integrations.html) (PostgreSQL, MySQL,
+  SQLite, Redis, MongoDB, Kafka, RabbitMQ)
+* [OpenAPI](https://kerniq-server.com/openapi.html)
+* [Performance and benchmarking](https://kerniq-server.com/performance.html)
+* [Architecture](https://kerniq-server.com/architecture.html)
+* [Migration guide](https://kerniq-server.com/migration.html) — upgrading across breaking releases
+* [Changelog](https://kerniq-server.com/changelog.html)
+
+Runnable examples live in [`examples/`](https://github.com/kerniqq/kerniq-server/tree/main/examples): `hello-world`,
 `rest-api`, `shared-state`, `route-groups`, `middleware`,
 `custom-middleware`, `error-handling`, `axum-integration`, `websocket`,
 `graceful-shutdown`, `openapi`, `validation` and `run-blocking`:
@@ -359,7 +365,7 @@ crates Kerniq does not depend on.
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Every change must pass:
+See [CONTRIBUTING.md](https://kerniq-server.com/contributing.html). Every change must pass:
 
 ```sh
 cargo fmt --all -- --check
@@ -370,5 +376,5 @@ cargo clippy --workspace --all-targets -- -D warnings
 
 ## License
 
-Licensed under either of [Apache License 2.0](LICENSE-APACHE) or
-[MIT license](LICENSE-MIT), at your option.
+Licensed under either of [Apache License 2.0](https://github.com/kerniqq/kerniq-server/blob/main/LICENSE-APACHE) or
+[MIT license](https://github.com/kerniqq/kerniq-server/blob/main/LICENSE-MIT), at your option.

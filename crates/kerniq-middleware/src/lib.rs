@@ -44,7 +44,7 @@
 //! authentication) use the standard Kerniq JSON error envelope.
 
 #![warn(missing_docs)]
-#![cfg_attr(docsrs, feature(doc_auto_cfg))]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 pub mod auth;
 #[cfg(feature = "compression")]

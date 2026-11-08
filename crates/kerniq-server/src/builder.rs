@@ -61,16 +61,21 @@ pub struct App<S = ()> {
     shutdown: Shutdown,
     signal: Option<Signal>,
     tasks: Vec<TaskStarter>,
+    #[cfg(feature = "observability")]
+    observability: Option<kerniq_observability::Observability>,
 }
 
 impl<S> fmt::Debug for App<S> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("App")
+        let mut d = f.debug_struct("App");
+        let d = d
             .field("router", &self.router)
             .field("middleware", &self.middleware)
             .field("config", &self.config)
-            .field("background_tasks", &self.tasks.len())
-            .finish_non_exhaustive()
+            .field("background_tasks", &self.tasks.len());
+        #[cfg(feature = "observability")]
+        let d = d.field("observability", &self.observability);
+        d.finish_non_exhaustive()
     }
 }
 
@@ -93,6 +98,8 @@ impl App<()> {
             shutdown: Shutdown::new(),
             signal: None,
             tasks: Vec::new(),
+            #[cfg(feature = "observability")]
+            observability: None,
         }
     }
 
@@ -133,6 +140,8 @@ impl App<()> {
             shutdown: self.shutdown,
             signal: self.signal,
             tasks: self.tasks,
+            #[cfg(feature = "observability")]
+            observability: self.observability,
         }
     }
 }
@@ -272,6 +281,50 @@ where
         self
     }
 
+    /// Enables observability (feature `observability`).
+    ///
+    /// ```no_run
+    /// use kerniq_server::prelude::*;
+    /// use kerniq_server::observability::prelude::*;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> Result<()> {
+    ///     let observability = Observability::builder()
+    ///         .service_name("payment-api")
+    ///         .metrics(MetricsConfig::new())
+    ///         .build()
+    ///         .await?;
+    ///
+    ///     App::new()
+    ///         .observability(observability)
+    ///         .get("/health", || async { "OK" })
+    ///         .run("0.0.0.0:3000")
+    ///         .await
+    /// }
+    /// ```
+    ///
+    /// At finalization:
+    ///
+    /// * HTTP instrumentation (metrics, a span per request, W3C context
+    ///   extraction) becomes the **outermost** middleware, so it measures
+    ///   everything inside it, including timeouts, rate limiting and the
+    ///   404 fallback;
+    /// * a Prometheus endpoint configured on the application listener is
+    ///   added *outside* all middleware, so scrapes are never instrumented,
+    ///   rate-limited or timed out; one configured with its own listener is
+    ///   served by a background task bound when the app starts.
+    ///
+    /// Under [`run`](Self::run)/[`serve`](Self::serve), telemetry is flushed
+    /// and shut down after connections and background tasks have drained,
+    /// bounded by the observability shutdown timeout. With
+    /// [`into_axum_router`](Self::into_axum_router) the application owns the
+    /// handle and calls `shutdown` itself.
+    #[cfg(feature = "observability")]
+    pub fn observability(mut self, observability: kerniq_observability::Observability) -> Self {
+        self.observability = Some(observability);
+        self
+    }
+
     /// Sets the server configuration.
     pub fn config(mut self, config: ServerConfig) -> Self {
         self.config = config;
@@ -357,6 +410,8 @@ where
             shutdown,
             signal,
             tasks,
+            #[cfg(feature = "observability")]
+            observability,
         } = self;
 
         let router = router.into_axum();
@@ -383,6 +438,12 @@ where
         }
         let router = middleware.apply(router);
 
+        #[cfg(feature = "observability")]
+        let router = match &observability {
+            Some(observability) => attach_observability(router, observability),
+            None => router,
+        };
+
         (
             router,
             Lifecycle {
@@ -390,6 +451,8 @@ where
                 shutdown,
                 signal,
                 tasks,
+                #[cfg(feature = "observability")]
+                observability,
             },
         )
     }
@@ -456,9 +519,15 @@ where
             shutdown,
             signal,
             tasks,
+            #[cfg(feature = "observability")]
+            observability,
         } = lifecycle;
 
         let background = BackgroundTasks::new(shutdown.clone());
+        #[cfg(feature = "observability")]
+        if let Some(observability) = &observability {
+            start_metrics_listener(observability, &background).await?;
+        }
         for start in tasks {
             start(&background);
         }
@@ -488,6 +557,17 @@ where
             background.shutdown(config.shutdown_timeout).await;
         }
         tracing::info!("kerniq server stopped");
+        #[cfg(feature = "observability")]
+        if let Some(observability) = observability {
+            let report = observability.shutdown().await;
+            if report.timed_out || !report.errors.is_empty() {
+                tracing::warn!(
+                    duration = ?report.duration,
+                    errors = ?report.errors,
+                    "telemetry shutdown incomplete"
+                );
+            }
+        }
         result.map_err(Error::from)
     }
 }
@@ -497,6 +577,47 @@ struct Lifecycle {
     shutdown: Shutdown,
     signal: Option<Signal>,
     tasks: Vec<TaskStarter>,
+    #[cfg(feature = "observability")]
+    observability: Option<kerniq_observability::Observability>,
+}
+
+#[cfg(feature = "observability")]
+fn attach_observability(
+    router: axum::Router,
+    observability: &kerniq_observability::Observability,
+) -> axum::Router {
+    // Applied last, so it is the outermost layer on every route.
+    let router = observability.http_instrumentation().apply(router);
+    #[cfg(feature = "prometheus")]
+    if let Some(prometheus) = observability.prometheus()
+        && prometheus.config().listen_address().is_none()
+    {
+        // Merged after every layer: scrapes bypass all middleware.
+        return router.merge(prometheus.router());
+    }
+    router
+}
+
+#[cfg(feature = "observability")]
+#[allow(clippy::unused_async)]
+async fn start_metrics_listener(
+    observability: &kerniq_observability::Observability,
+    background: &BackgroundTasks,
+) -> Result<()> {
+    #[cfg(feature = "prometheus")]
+    if let Some(prometheus) = observability.prometheus()
+        && let Some(address) = prometheus.config().listen_address()
+    {
+        let listener = kerniq_runtime::bind(&address.to_string()).await?;
+        let prometheus = prometheus.clone();
+        background.spawn("prometheus-metrics", move |shutdown: Shutdown| async move {
+            if let Err(err) = prometheus.serve(listener, shutdown.wait_owned()).await {
+                tracing::error!(error = %err, "Prometheus metrics listener failed");
+            }
+        });
+    }
+    let _ = (observability, background);
+    Ok(())
 }
 
 async fn not_found() -> Error {

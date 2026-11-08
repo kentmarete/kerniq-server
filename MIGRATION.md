@@ -33,6 +33,11 @@ covered by this guide.
 
 ## Releases
 
+### 0.1.3
+
+No breaking changes. Update with `cargo update -p kerniq-server`. The new
+observability features are opt-in; see `docs/observability/overview.md`.
+
 ### 0.1.2
 
 No breaking changes. Update with `cargo update -p kerniq-server`.

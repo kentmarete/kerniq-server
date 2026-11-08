@@ -1,0 +1,76 @@
+# OpenTelemetry Collector: Option B gateway for the local environment.
+#
+#   Kerniq app --OTLP--> Collector --+--> Prometheus (scrapes :8889)  metrics
+#                                    +--> Tempo (OTLP)                 traces
+#                                    +--> Loki (OTLP/HTTP)             logs
+#
+# The application only speaks OTLP; changing backends means changing this
+# file, never the application.
+
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  # Bound the Collector's own memory. Must be the first processor.
+  memory_limiter:
+    check_interval: 1s
+    limit_percentage: 80
+    spike_limit_percentage: 25
+  batch:
+    send_batch_size: 8192
+    timeout: 5s
+
+exporters:
+  # Metric names match Option A exactly (http_server_request_duration_seconds
+  # ...), so the same dashboards work for both architectures.
+  # resource_to_telemetry_conversion copies resource attributes onto every
+  # series; that is how `service_name` becomes a label here.
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    resource_to_telemetry_conversion:
+      enabled: true
+
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+
+  # Loki 3 ingests OTLP natively.
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+
+  debug:
+    verbosity: basic
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  telemetry:
+    metrics:
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 0.0.0.0
+                port: 8888
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus]
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/tempo]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/loki]

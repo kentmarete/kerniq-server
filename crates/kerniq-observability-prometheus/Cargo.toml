@@ -1,0 +1,37 @@
+[package]
+name = "kerniq-observability-prometheus"
+description = "Prometheus scrape endpoint for Kerniq Server, backed by the OpenTelemetry Prometheus exporter."
+readme = "README.md"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation = "https://docs.rs/kerniq-observability-prometheus"
+authors.workspace = true
+keywords = ["observability", "prometheus", "opentelemetry", "metrics", "kerniq"]
+categories = ["development-tools::debugging", "web-programming::http-server"]
+
+[dependencies]
+axum.workspace = true
+http.workspace = true
+opentelemetry = { workspace = true, features = ["metrics"] }
+opentelemetry_sdk = { workspace = true, features = ["metrics"] }
+opentelemetry-prometheus.workspace = true
+prometheus.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["net", "rt"] }
+tracing.workspace = true
+
+[dev-dependencies]
+http-body-util.workspace = true
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "io-util", "time"] }
+tower = { workspace = true, features = ["util"] }
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints]
+workspace = true

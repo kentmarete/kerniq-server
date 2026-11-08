@@ -51,6 +51,14 @@
 //! | `config-file` | | `ServerConfig::from_file` (TOML) |
 //! | `macros` | | [`authorize`] attribute for role/permission checks |
 //! | `full` | | all of the above |
+//! | `observability` | | [`App::observability`], `observability` module |
+//! | `observability-metrics` | | OpenTelemetry metrics, HTTP metrics |
+//! | `observability-logs` | | JSON / pretty console logs, log export |
+//! | `observability-tracing` | | distributed tracing, W3C propagation |
+//! | `otlp` / `otlp-tls` | | OTLP export to a Collector or backend |
+//! | `prometheus` | | Prometheus scrape endpoint |
+//! | `runtime-metrics` | | Tokio and process metrics |
+//! | `full-observability` | | all observability features except `otlp-tls` |
 
 #![warn(missing_docs)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
@@ -117,6 +125,13 @@ pub mod runtime {
     pub use kerniq_runtime::{BackgroundTasks, ServeOptions, Shutdown, os_signal};
 }
 
+/// Kerniq Observe: metrics, logs and traces (feature `observability`).
+/// See [`App::observability`].
+#[cfg(feature = "observability")]
+pub mod observability {
+    pub use kerniq_observability::*;
+}
+
 /// OpenAPI documents and Swagger UI (feature `openapi`).
 #[cfg(feature = "openapi")]
 pub mod openapi {
@@ -156,4 +171,60 @@ mod documentation {
     doc_page!(OpenApi, "docs/openapi.md", "openapi", "json");
     doc_page!(Performance, "docs/performance.md");
     doc_page!(Architecture, "docs/architecture.md");
+    doc_page!(
+        ObsOverview,
+        "docs/observability/overview.md",
+        "full-observability"
+    );
+    doc_page!(
+        ObsArchitecture,
+        "docs/observability/architecture.md",
+        "full-observability"
+    );
+    doc_page!(
+        ObsPrometheus,
+        "docs/observability/prometheus.md",
+        "full-observability"
+    );
+    doc_page!(ObsOtlp, "docs/observability/otlp.md", "full-observability");
+    doc_page!(
+        ObsLogging,
+        "docs/observability/logging.md",
+        "full-observability"
+    );
+    doc_page!(
+        ObsTracing,
+        "docs/observability/tracing.md",
+        "full-observability"
+    );
+    doc_page!(
+        ObsCustomMetrics,
+        "docs/observability/custom-metrics.md",
+        "full-observability"
+    );
+    doc_page!(
+        ObsGrafana,
+        "docs/observability/grafana.md",
+        "full-observability"
+    );
+    doc_page!(
+        ObsVendors,
+        "docs/observability/vendor-integrations.md",
+        "full-observability"
+    );
+    doc_page!(
+        ObsPerformance,
+        "docs/observability/performance.md",
+        "full-observability"
+    );
+    doc_page!(
+        ObsConfiguration,
+        "docs/observability/configuration.md",
+        "full-observability"
+    );
+    doc_page!(
+        ObsTroubleshooting,
+        "docs/observability/troubleshooting.md",
+        "full-observability"
+    );
 }

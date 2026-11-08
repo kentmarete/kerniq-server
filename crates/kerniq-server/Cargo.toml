@@ -33,8 +33,28 @@ validation = ["kerniq-http/validation"]
 config-file = ["kerniq-core/config-file"]
 # `#[authorize(..)]` role/permission attribute for handlers.
 macros = ["dep:kerniq-macros"]
-# Everything.
+# Everything (except observability, which has its own umbrella feature).
 full = ["json", "tracing", "cors", "compression", "websocket", "openapi", "validation", "config-file", "macros"]
+
+# Observability (Kerniq Observe). `observability` adds `App::observability`
+# and the `observability` module; the others choose signals and exporters.
+# (`tracing` is taken by the Logger feature above, hence the prefixes.)
+observability = ["dep:kerniq-observability"]
+observability-metrics = ["observability", "kerniq-observability/metrics"]
+observability-logs = ["observability", "kerniq-observability/logs"]
+observability-tracing = ["observability", "kerniq-observability/tracing"]
+otlp = ["observability", "kerniq-observability/otlp"]
+otlp-tls = ["otlp", "kerniq-observability/otlp-tls"]
+prometheus = ["observability-metrics", "kerniq-observability/prometheus"]
+runtime-metrics = ["observability-metrics", "kerniq-observability/runtime"]
+full-observability = [
+    "observability-metrics",
+    "observability-logs",
+    "observability-tracing",
+    "otlp",
+    "prometheus",
+    "runtime-metrics",
+]
 
 [dependencies]
 kerniq-core.workspace = true
@@ -44,6 +64,7 @@ kerniq-runtime.workspace = true
 kerniq-middleware.workspace = true
 kerniq-openapi = { workspace = true, optional = true }
 kerniq-macros = { workspace = true, optional = true }
+kerniq-observability = { workspace = true, optional = true }
 axum.workspace = true
 http.workspace = true
 tokio = { workspace = true, features = ["net"] }
@@ -63,6 +84,8 @@ tower = { workspace = true, features = ["util", "timeout", "limit"] }
 tower-http = { workspace = true, features = ["set-header", "cors", "request-id", "trace"] }
 utoipa = { workspace = true }
 validator.workspace = true
+kerniq-observability-testing.workspace = true
+tracing-subscriber = { workspace = true, features = ["registry", "std"] }
 
 [[test]]
 name = "extractors"
@@ -75,6 +98,10 @@ required-features = ["json"]
 [[test]]
 name = "authorization"
 required-features = ["macros"]
+
+[[test]]
+name = "observability"
+required-features = ["full-observability"]
 
 [package.metadata.docs.rs]
 all-features = true

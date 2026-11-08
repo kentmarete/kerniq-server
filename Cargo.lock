@@ -679,6 +679,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "example-task-api"
+version = "0.0.0"
+dependencies = [
+ "http-body-util",
+ "kerniq-server",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tower",
+]
+
+[[package]]
 name = "example-validation"
 version = "0.0.0"
 dependencies = [

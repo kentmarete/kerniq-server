@@ -1,0 +1,15 @@
+mod health;
+mod tasks;
+mod users;
+
+use kerniq_server::prelude::*;
+
+use crate::state::AppState;
+
+/// All routes of the application.
+pub fn router() -> Router<AppState> {
+    Router::new()
+        .get("/health", health::health)
+        .mount("/api/v1/users", users::router())
+        .mount("/api/v1/tasks", tasks::router())
+}

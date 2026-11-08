@@ -16,15 +16,16 @@ serde = { version = "1", features = ["derive"] }   # for JSON types
 Or let the CLI create a project for you:
 
 ```sh
-cargo install --path crates/kerniq-cli       # from a checkout (installs `kerniq`)
+cargo install kerniq-cli                    # installs the `kerniq` command
 kerniq new customer-api --template rest
 cd customer-api
 kerniq dev
 ```
 
-Until Kerniq is published on crates.io, point generated projects at a local
-checkout with `--kerniq-path /path/to/kerniq-server` (or set
-`KERNIQ_SERVER_PATH`), or at a repository with `--kerniq-git <url>`.
+Generated projects depend on `kerniq-server` from crates.io. To work against
+unreleased changes, point them at a local checkout with
+`--kerniq-path /path/to/kerniq-server` (or set `KERNIQ_SERVER_PATH`), or at a
+repository with `--kerniq-git <url>`.
 
 ### Optional features
 

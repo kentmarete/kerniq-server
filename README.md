@@ -332,6 +332,7 @@ The guides are hosted at **[kerniq-server.com](https://kerniq-server.com/)** and
 reference is on **[docs.rs](https://docs.rs/kerniq-server)**.
 
 * [Getting started](https://kerniq-server.com/getting-started.html) — installation, first app, CLI
+* [Tutorial: build a service](https://kerniq-server.com/tutorial.html) — the recommended project layout, step by step
 * [Routing](https://kerniq-server.com/routing.html)
 * [Handlers, responses and errors](https://kerniq-server.com/handlers.html)
 * [Extractors](https://kerniq-server.com/extractors.html) (including validation)
@@ -349,11 +350,13 @@ reference is on **[docs.rs](https://docs.rs/kerniq-server)**.
 * [Architecture](https://kerniq-server.com/architecture.html)
 * [Migration guide](https://kerniq-server.com/migration.html) — upgrading across breaking releases
 * [Changelog](https://kerniq-server.com/changelog.html)
+* [Roadmap](https://kerniq-server.com/roadmap.html) — what's next, including kerniq-ai
 
 Runnable examples live in [`examples/`](https://github.com/kerniqq/kerniq-server/tree/main/examples): `hello-world`,
 `rest-api`, `shared-state`, `route-groups`, `middleware`,
 `custom-middleware`, `error-handling`, `axum-integration`, `websocket`,
-`graceful-shutdown`, `openapi`, `validation` and `run-blocking`:
+`graceful-shutdown`, `openapi`, `validation`, `run-blocking` and `task-api`
+(the finished tutorial project):
 
 ```sh
 cargo run -p example-rest-api

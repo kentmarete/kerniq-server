@@ -1,0 +1,50 @@
+use std::collections::BTreeMap;
+use std::sync::Arc;
+
+use tokio::sync::RwLock;
+
+use crate::error::UserError;
+use crate::models::user::{NewUser, User};
+
+/// User business logic. Knows nothing about HTTP; swap the in-memory map for
+/// a repository backed by your database of choice.
+#[derive(Debug, Clone, Default)]
+pub struct UserService {
+    users: Arc<RwLock<BTreeMap<u64, User>>>,
+}
+
+impl UserService {
+    pub async fn list(&self) -> Vec<User> {
+        self.users.read().await.values().cloned().collect()
+    }
+
+    pub async fn get(&self, id: u64) -> Result<User, UserError> {
+        self.users
+            .read()
+            .await
+            .get(&id)
+            .cloned()
+            .ok_or(UserError::NotFound(id))
+    }
+
+    pub async fn create(&self, input: NewUser) -> Result<User, UserError> {
+        if !input.email.contains('@') {
+            return Err(UserError::InvalidEmail);
+        }
+        let mut users = self.users.write().await;
+        if users
+            .values()
+            .any(|u| u.email.eq_ignore_ascii_case(&input.email))
+        {
+            return Err(UserError::EmailTaken);
+        }
+        let id = users.keys().next_back().copied().unwrap_or(0) + 1;
+        let user = User {
+            id,
+            name: input.name,
+            email: input.email,
+        };
+        users.insert(id, user.clone());
+        Ok(user)
+    }
+}

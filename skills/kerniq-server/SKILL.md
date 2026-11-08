@@ -30,8 +30,10 @@ cd my-service && kerniq dev                # run with auto-restart
 | `modular` | Most real services: `config`, `state`, `error`, `models`, `services`, `routes` modules |
 | `production` | Deployable service: TOML + env config, JSON logs, request IDs, security headers, CORS, compression, metrics, health probes, background task, Dockerfile |
 
-Until Kerniq is on crates.io, add `--kerniq-path /path/to/kerniq-server` or
-`--kerniq-git <url>`. Without the CLI, add:
+Install the CLI with `cargo install kerniq-cli`. Generated projects depend on
+`kerniq-server` from crates.io; add `--kerniq-path /path/to/kerniq-server` or
+`--kerniq-git <url>` only to build against unreleased changes. Without the
+CLI, add:
 
 ```toml
 [dependencies]

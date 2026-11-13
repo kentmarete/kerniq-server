@@ -380,6 +380,16 @@ cargo test --workspace
 cargo clippy --workspace --all-targets -- -D warnings
 ```
 
+## Acknowledgements
+
+Special thanks to [Claude Code](https://claude.com/product/claude-code) for its assistance throughout the development of Kerniq-server.
+
+Claude Code contributed to the testing and debugging process, helping investigate complex code paths, unravel intricate logic across different code segments, identify potential issues, and troubleshoot implementation challenges.
+
+Its assistance in analysing execution flows, understanding interconnected components, and validating behaviour helped streamline development and improve the overall engineering process.
+
+We appreciate Claude Code as an AI-powered development tool that supported the engineering work behind Kerniq-server.
+
 ## License
 
 Licensed under either of [Apache License 2.0](https://github.com/kerniqq/kerniq-server/blob/main/LICENSE-APACHE) or
